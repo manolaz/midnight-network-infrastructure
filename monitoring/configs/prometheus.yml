@@ -1,0 +1,12 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "/etc/prometheus/node_alerts.yml"
+
+scrape_configs:
+  - job_name: 'midnight_node'
+    static_configs:
+      # Assuming default Substrate metrics port is 9615
+      - targets: ['host.docker.internal:9615']

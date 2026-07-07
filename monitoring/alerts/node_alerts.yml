@@ -1,0 +1,32 @@
+groups:
+- name: midnight_node_alerts
+  rules:
+  # 1. Node stops producing/receiving blocks
+  - alert: BlockProductionStalled
+    expr: rate(substrate_block_height{status="best"}[5m]) == 0
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Node is not syncing blocks"
+      description: "The best block height has not increased in 5 minutes."
+
+  # 2. Peer count drops below a threshold
+  - alert: LowPeerCount
+    expr: substrate_sub_libp2p_peers_count < 5
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Node has low peer count"
+      description: "The node has fewer than 5 peers for over 5 minutes."
+
+  # 3. High CPU Usage
+  - alert: HighCpuUsage
+    expr: rate(process_cpu_seconds_total[5m]) > 0.85
+    for: 10m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High CPU usage on node"
+      description: "Process CPU usage is over 85% for 10 minutes."
