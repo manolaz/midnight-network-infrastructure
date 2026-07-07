@@ -17,6 +17,7 @@ This repository contains the required setup and automation for operating a Midni
 │       └── node_alerts.yml     # Alert definitions
 └── scripts/
     ├── health_check.sh         # Section 3 (Option C): Node health checker automation script
+    ├── install_midnight_archive_node.sh # Reproducible automated installation script
     ├── key_collection.sh       # Section 3 (Option A): Key collection script
     └── maintenance_notify.sh   # Section 3 (Option B): Maintenance notification script
 ```
@@ -24,6 +25,8 @@ This repository contains the required setup and automation for operating a Midni
 ## Section 1: FNO Onboarding
 The full procedure to join the Midnight Pre-Production network as an FNO is documented in **`RUNBOOK.md`**.
 *Note: A Midnight node heavily relies on the Cardano network as a partner chain. The runbook clearly outlines the Mithril snapshot and Cardano DB Sync requirements which are absolute prerequisites before spinning up the Midnight node binary.*
+
+**Automated & Reproducible Setup:** To fulfill the requirement of tracking testnet transactions, an automated script is provided in `scripts/install_midnight_archive_node.sh`. This sets up the Substrate binary using `--pruning archive` and exposes the WebSocket RPC endpoints, allowing developers and indexers to trace all historical transactions.
 
 ## Section 2: Monitoring & Alerting (Telemetry)
 The `monitoring` directory contains a basic `docker-compose` setup to spin up Prometheus and Grafana.

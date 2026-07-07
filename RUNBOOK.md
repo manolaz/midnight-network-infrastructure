@@ -14,6 +14,8 @@
 
 > **⚠️ CRITICAL PREREQUISITE:** Cardano DB Sync is a hard prerequisite for the Midnight node stack. The Midnight node requires a persistent connection to a PostgreSQL database populated by Cardano-db-sync. Syncing takes a minimum of 6 hours against pre-prod. **Do not attempt to run the Midnight node until DB Sync is fully completed.**
 
+> **🚀 AUTOMATED SETUP:** A fully reproducible shell script is available at `scripts/install_midnight_archive_node.sh` to automate Steps 1 and 3 of this guide.
+
 ---
 
 ### Step 1: Cardano Relay Node & Mithril Setup
@@ -131,13 +133,16 @@ Midnight operates as a partner chain to Cardano. We use Mithril to download a ve
    source ~/.env
    ```
 
-3. **Start Midnight Node:**
+3. **Start Midnight Node (Archive Mode):**
+   To track all historical testnet transactions and enable querying by local indexers, run the node in `archive` mode and expose the RPC.
    ```bash
    midnight-node \
      --chain /home/$USER/res/preprod/chain-spec-raw.json \
      --base-path /home/$USER/data \
-     --pool-limit 35 \
      --name $NODE_NAME \
+     --pruning archive \
+     --rpc-external \
+     --rpc-cors all \
      --no-private-ip
    ```
 
