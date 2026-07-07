@@ -1,0 +1,20 @@
+[
+  {
+    "id": "fno-1",
+    "email": "admin@fno1.test",
+    "responded": false,
+    "pub_key": null
+  },
+  {
+    "id": "fno-2",
+    "email": "admin@fno2.test",
+    "responded": false,
+    "pub_key": null
+  },
+  {
+    "id": "fno-3",
+    "email": "admin@fno3.test",
+    "responded": false,
+    "pub_key": null
+  }
+]

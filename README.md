@@ -16,7 +16,9 @@ This repository contains the required setup and automation for operating a Midni
 │   └── alerts/
 │       └── node_alerts.yml     # Alert definitions
 └── scripts/
-    └── health_check.sh    # Section 3: Node health checker automation script
+    ├── health_check.sh         # Section 3 (Option C): Node health checker automation script
+    ├── key_collection.sh       # Section 3 (Option A): Key collection script
+    └── maintenance_notify.sh   # Section 3 (Option B): Maintenance notification script
 ```
 
 ## Section 1: FNO Onboarding
@@ -37,22 +39,21 @@ The `monitoring` directory contains a basic `docker-compose` setup to spin up Pr
    - **Why:** Extended high CPU usage (>85% for 10m) usually points to the node struggling with block processing, an expensive RPC query being spammed, or host exhaustion. 
    - **Operational Response:** Check the host's `htop`, investigate recent RPC requests, and evaluate if a vertical scale up (more cores) is required for the VM.
 
-## Section 3: Automation & Scripting (Health Checker)
-We implemented **Option C** (Node Health Checker). 
-The script polls the node's RPC endpoint (`system_health`), parses the JSON response using `jq`, generates a structured health report to disk, and diffs it against the previous run to detect regressions (like peer count drops or sync status degradation).
+## Section 3: Automation & Scripting
+We have implemented **all three options** to demonstrate comprehensive operational tooling capabilities.
 
-### Usage Instructions
-Ensure you have `curl` and `jq` installed on your machine.
-```bash
-# Make it executable
-chmod +x scripts/health_check.sh
+### Option A: Key Collection Script (`scripts/key_collection.sh`)
+This script iterates over a list of Mock FNO identifiers, constructs a structured public key request, and records who has responded. 
+- **Features:** It is idempotent. Re-running the script will skip operators who have already supplied their keys, and gracefully handle operators who haven't. Results are written cleanly to `scripts/data/key_collection_state.json`.
 
-# Run the script (defaults to http://localhost:9944)
-./scripts/health_check.sh
+### Option B: Maintenance Notification (`scripts/maintenance_notify.sh`)
+This script constructs a structured JSON notification for a maintenance window and sends it to the FNO list. 
+- **Features:** Simulates an acknowledgment system and waits for a configurable timeout (default 5s). Unacknowledged operators are automatically flagged for manual follow-up. 
+- **Usage:** `./scripts/maintenance_notify.sh [timeout_in_seconds]`
 
-# Run against a specific RPC endpoint
-./scripts/health_check.sh http://my-node-ip:9944
-```
+### Option C: Health Checker (`scripts/health_check.sh`)
+This script polls the node's RPC endpoint (`system_health`), parses the JSON response using `jq`, generates a structured health report to disk, and diffs it against the previous run to detect regressions (like peer count drops or sync status degradation).
+- **Usage:** `./scripts/health_check.sh [optional_rpc_endpoint]`
 
 ## Section 4: Security & Key Management
 Answers to the critical security, key rotation, and incident response questions are provided in **`SECURITY.md`**.
@@ -61,4 +62,3 @@ Answers to the critical security, key rotation, and incident response questions 
 - Assumed `jq`, `curl`, `tar`, and `docker-compose` are installed on the host.
 - Assumed standard Substrate Prometheus exporter metrics port `9615` for scraping.
 - Assumed that the operator uses a cloud-native environment (AWS/GCP/Azure) and has access to KMS/Secrets managers.
-- **If I had more time:** I would write an Ansible playbook or Terraform modules to fully automate the provisioning of the host, Cardano DB Sync, and the Midnight node, rather than just providing a bash runbook.
