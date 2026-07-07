@@ -17,7 +17,8 @@ This repository contains the required setup and automation for operating a Midni
 │       └── node_alerts.yml     # Alert definitions
 └── scripts/
     ├── health_check.sh         # Section 3 (Option C): Node health checker automation script
-    ├── install_midnight_archive_node.sh # Reproducible automated installation script
+    ├── install_midnight_archive_node.sh # Reproducible automated installation script (Cloud-Init Ready)
+    ├── gcp_deploy.sh           # Google Cloud Platform VM provisioning script
     ├── key_collection.sh       # Section 3 (Option A): Key collection script
     └── maintenance_notify.sh   # Section 3 (Option B): Maintenance notification script
 ```
@@ -27,6 +28,15 @@ The full procedure to join the Midnight Pre-Production network as an FNO is docu
 *Note: A Midnight node heavily relies on the Cardano network as a partner chain. The runbook clearly outlines the Mithril snapshot and Cardano DB Sync requirements which are absolute prerequisites before spinning up the Midnight node binary.*
 
 **Automated & Reproducible Setup:** To fulfill the requirement of tracking testnet transactions, an automated script is provided in `scripts/install_midnight_archive_node.sh`. This sets up the Substrate binary using `--pruning archive` and exposes the WebSocket RPC endpoints, allowing developers and indexers to trace all historical transactions.
+
+### Deploying to Google Cloud (GCP)
+To fully automate the infrastructure provisioning and node setup on Google Cloud:
+1. Ensure you have the `gcloud` CLI installed and authenticated.
+2. Run the deployment script:
+   ```bash
+   ./scripts/gcp_deploy.sh [YOUR_PROJECT_ID] [ZONE]
+   ```
+This will automatically provision an `e2-standard-4` Ubuntu 22.04 VM with a 500GB SSD, configure the required firewall rules (ports 30333, 9944, 3001, etc.), and run `install_midnight_archive_node.sh` as a startup script.
 
 ## Section 2: Monitoring & Alerting (Telemetry)
 The `monitoring` directory contains a basic `docker-compose` setup to spin up Prometheus and Grafana.

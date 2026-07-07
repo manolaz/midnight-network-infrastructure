@@ -11,13 +11,16 @@
 set -e
 
 if [ "$EUID" -eq 0 ]; then
-  echo "Please run as a non-root user with sudo privileges (or run specific steps carefully)."
-  echo "Example: sudo -u midnight ./install_midnight_archive_node.sh"
-  exit 1
+  echo "[*] Running as root (e.g., GCP Startup Script). Setting up 'midnight' user..."
+  id -u midnight &>/dev/null || useradd -m -s /bin/bash midnight
+  NODE_USER="midnight"
+  USER_HOME="/home/midnight"
+else
+  NODE_USER="$USER"
+  USER_HOME="$HOME"
 fi
 
-USER_HOME=$HOME
-echo "[*] Using home directory: $USER_HOME"
+echo "[*] Using user: $NODE_USER, home directory: $USER_HOME"
 
 # 1. Update and install dependencies
 echo "[*] Step 1: Installing dependencies..."
@@ -62,7 +65,7 @@ Wants=network-online.target
 After=network-online.target
 
 [Service]
-User=$USER
+User=$NODE_USER
 Type=simple
 WorkingDirectory=$USER_HOME/cardano-data
 ExecStart=$USER_HOME/.local/bin/cardano-node run \
@@ -111,7 +114,7 @@ Wants=network-online.target
 After=network-online.target cardano-node.service
 
 [Service]
-User=$USER
+User=$NODE_USER
 Type=simple
 EnvironmentFile=$USER_HOME/.env
 WorkingDirectory=$USER_HOME/data
@@ -134,6 +137,12 @@ WantedBy=multi-user.target
 SERVICE
 
 sudo systemctl daemon-reload
+
+# Fix permissions if script was run as root
+if [ "$EUID" -eq 0 ]; then
+  echo "[*] Fixing permissions for $USER_HOME..."
+  chown -R $NODE_USER:$NODE_USER $USER_HOME
+fi
 
 echo "========================================================================"
 echo "[+] Setup automation completed."
