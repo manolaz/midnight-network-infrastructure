@@ -1,77 +1,101 @@
-# Midnight Pre-Production FNO Node Setup
+# 🌑 Midnight Network: Pre-Production FNO Infrastructure
 
-This repository contains the required setup and automation for operating a Midnight Full Node Operator (FNO) on the pre-production network. 
+[![Midnight Network](https://img.shields.io/badge/Network-Pre--Production-purple.svg)]()
+[![Infrastructure](https://img.shields.io/badge/Infrastructure-GCP_Automated-blue.svg)]()
+[![Observability](https://img.shields.io/badge/Observability-Prometheus_%7C_Grafana-orange.svg)]()
 
-## Project Structure
+## 📑 Executive Summary
+
+This repository encapsulates the deployment scripts, operational runbooks, observability stack, and Day-2 automation tooling required to securely operate a **Full Node Operator (FNO)** on the Midnight Pre-Production network. 
+
+Designed with production-grade engineering principles, this setup explicitly handles Midnight's architecture as a Cardano Partner Chain. It systematically orchestrates the critical dependencies—Mithril snapshotting, Cardano Relay sync, and PostgreSQL database initialization via `cardano-db-sync`—before bootstrapping the Midnight Substrate runtime.
+
+---
+
+## 🏗 Architecture & Design Philosophy
+
+1. **Dependency Sequencing:** The Midnight node possesses a hard dependency on a synchronized Cardano state. The automation explicitly manages this initialization phase to prevent premature Substrate startup failures.
+2. **Data Availability (Archive Mode):** To support local indexers, block explorers, and rigorous testnet transaction tracking, the node defaults to `--pruning archive`. RPC WebSocket endpoints are explicitly exposed with strict CORS boundaries.
+3. **Cloud-Native & Idempotent:** Shell scripts are engineered to be `cloud-init` compliant, allowing for zero-touch infrastructure provisioning on cloud providers like Google Cloud Platform (GCP).
+
+---
+
+## 📂 Repository Structure
 
 ```text
 .
-├── README.md              # Overview, setup instructions, design notes
-├── RUNBOOK.md             # Section 1: FNO onboarding steps for Midnight (including DB Sync)
-├── SECURITY.md            # Section 4: Key management answers & recommendations
+├── README.md                           # Documentation entrypoint (this file)
+├── RUNBOOK.md                          # Step-by-step manual FNO onboarding & recovery procedures
+├── SECURITY.md                         # Threat modeling, key management & incident response protocols
 ├── monitoring/
 │   ├── configs/
-│   │   ├── docker-compose.yml  # Prometheus & Grafana stack
-│   │   └── prometheus.yml      # Scrape config targeting Midnight node
+│   │   ├── docker-compose.yml          # Containerized telemetry stack (Prometheus + Grafana)
+│   │   └── prometheus.yml              # Target configurations for Substrate metric scraping
 │   └── alerts/
-│       └── node_alerts.yml     # Alert definitions
+│       └── node_alerts.yml             # Critical alerting thresholds (Block stalling, CPU, Peers)
 └── scripts/
-    ├── health_check.sh         # Section 3 (Option C): Node health checker automation script
-    ├── install_midnight_archive_node.sh # Reproducible automated installation script (Cloud-Init Ready)
-    ├── gcp_deploy.sh           # Google Cloud Platform VM provisioning script
-    ├── key_collection.sh       # Section 3 (Option A): Key collection script
-    └── maintenance_notify.sh   # Section 3 (Option B): Maintenance notification script
+    ├── gcp_deploy.sh                   # GCP VM provisioning & firewall automation
+    ├── install_midnight_archive_node.sh # Cloud-Init target: Zero-touch node setup
+    ├── health_check.sh                 # Day-2: RPC-based health & regression monitoring (Option C)
+    ├── key_collection.sh               # Day-2: Idempotent FNO public key collector (Option A)
+    └── maintenance_notify.sh           # Day-2: Automated maintenance notification & ACK tracking (Option B)
 ```
 
-## Section 1: FNO Onboarding
-The full procedure to join the Midnight Pre-Production network as an FNO is documented in **`RUNBOOK.md`**.
-*Note: A Midnight node heavily relies on the Cardano network as a partner chain. The runbook clearly outlines the Mithril snapshot and Cardano DB Sync requirements which are absolute prerequisites before spinning up the Midnight node binary.*
+---
 
-**Automated & Reproducible Setup:** To fulfill the requirement of tracking testnet transactions, an automated script is provided in `scripts/install_midnight_archive_node.sh`. This sets up the Substrate binary using `--pruning archive` and exposes the WebSocket RPC endpoints, allowing developers and indexers to trace all historical transactions.
+## 🚀 Deployment Operations
 
-### Deploying to Google Cloud (GCP)
-To fully automate the infrastructure provisioning and node setup on Google Cloud:
-1. Ensure you have the `gcloud` CLI installed and authenticated.
-2. Run the deployment script:
-   ```bash
-   ./scripts/gcp_deploy.sh [YOUR_PROJECT_ID] [ZONE]
-   ```
-This will automatically provision an `e2-standard-4` Ubuntu 22.04 VM with a 500GB SSD, configure the required firewall rules (ports 30333, 9944, 3001, etc.), and run `install_midnight_archive_node.sh` as a startup script.
+### Option 1: Automated Cloud Provisioning (GCP)
+For frictionless, reproducible infrastructure, a wrapper script is provided to provision an `e2-standard-4` (Ubuntu 22.04, 500GB SSD) instance on Google Cloud. 
 
-## Section 2: Monitoring & Alerting (Telemetry)
-The `monitoring` directory contains a basic `docker-compose` setup to spin up Prometheus and Grafana.
+```bash
+# Authenticate with Google Cloud
+gcloud auth login
 
-### Alert Design Choices
-1. **BlockProductionStalled (Critical):** 
-   - **Why:** If the node's block height does not increase for 5 minutes, it is no longer syncing with the network or participating in consensus. This is a critical failure.
-   - **Operational Response:** Check if the node process is running, verify external network connectivity, check Cardano DB Sync logs, and restart the node service if necessary.
-2. **LowPeerCount (Warning):**
-   - **Why:** A healthy peer-to-peer network requires good connectivity. Falling below 5 peers increases the risk of being isolated from the network or missing consensus votes.
-   - **Operational Response:** Check firewall rules (Port 30333), verify that bootnodes are reachable, and restart the service if connections appear stale.
-3. **HighCpuUsage (Warning):**
-   - **Why:** Extended high CPU usage (>85% for 10m) usually points to the node struggling with block processing, an expensive RPC query being spammed, or host exhaustion. 
-   - **Operational Response:** Check the host's `htop`, investigate recent RPC requests, and evaluate if a vertical scale up (more cores) is required for the VM.
+# Deploy the FNO stack (Automatically sets up firewalls, VMs, and cloud-init scripts)
+./scripts/gcp_deploy.sh [YOUR_PROJECT_ID] [COMPUTE_ZONE]
+```
+*The VM will boot and immediately execute `install_midnight_archive_node.sh` as `root`, safely configuring the `midnight` user environment and pulling the Mithril snapshots.*
 
-## Section 3: Automation & Scripting
-We have implemented **all three options** to demonstrate comprehensive operational tooling capabilities.
+### Option 2: Manual / On-Premise Setup
+For bare-metal or custom cloud environments, refer to the **[`RUNBOOK.md`](./RUNBOOK.md)**. It provides a comprehensive, step-by-step guide for manually bootstrapping the Cardano dependencies and the Midnight node.
 
-### Option A: Key Collection Script (`scripts/key_collection.sh`)
-This script iterates over a list of Mock FNO identifiers, constructs a structured public key request, and records who has responded. 
-- **Features:** It is idempotent. Re-running the script will skip operators who have already supplied their keys, and gracefully handle operators who haven't. Results are written cleanly to `scripts/data/key_collection_state.json`.
+---
 
-### Option B: Maintenance Notification (`scripts/maintenance_notify.sh`)
-This script constructs a structured JSON notification for a maintenance window and sends it to the FNO list. 
-- **Features:** Simulates an acknowledgment system and waits for a configurable timeout (default 5s). Unacknowledged operators are automatically flagged for manual follow-up. 
-- **Usage:** `./scripts/maintenance_notify.sh [timeout_in_seconds]`
+## 📊 Observability (Telemetry)
 
-### Option C: Health Checker (`scripts/health_check.sh`)
-This script polls the node's RPC endpoint (`system_health`), parses the JSON response using `jq`, generates a structured health report to disk, and diffs it against the previous run to detect regressions (like peer count drops or sync status degradation).
-- **Usage:** `./scripts/health_check.sh [optional_rpc_endpoint]`
+Robust visibility into the node's state is non-negotiable for an FNO. The `monitoring/` directory contains a lightweight, containerized telemetry stack.
 
-## Section 4: Security & Key Management
-Answers to the critical security, key rotation, and incident response questions are provided in **`SECURITY.md`**.
+### Alerting Rationale (`node_alerts.yml`)
+Alerts are designed with a high signal-to-noise ratio to prevent alert fatigue:
+1. **`BlockProductionStalled` (Critical):** Triggers if `substrate_block_height` remains static for 5 minutes. *Action: Investigate DB Sync connection or restart node service.*
+2. **`LowPeerCount` (Warning):** Triggers if `libp2p_peers_count` falls below 5. Substrate consensus degrades rapidly without adequate peer propagation. *Action: Validate port 30333 reachability and bootnode health.*
+3. **`HighCpuUsage` (Warning):** Triggers if CPU sustains >85% for 10 minutes. *Action: Check for RPC spam or prepare to vertically scale compute.*
 
-## Assumptions & Next Steps
-- Assumed `jq`, `curl`, `tar`, and `docker-compose` are installed on the host.
-- Assumed standard Substrate Prometheus exporter metrics port `9615` for scraping.
-- Assumed that the operator uses a cloud-native environment (AWS/GCP/Azure) and has access to KMS/Secrets managers.
+---
+
+## 🛠 Day-2 Automation Tools
+
+Operational scripts (located in `scripts/`) are built with idempotency and structured output (JSON) in mind, allowing them to be seamlessly integrated into CI/CD pipelines or cron jobs.
+
+*   **`health_check.sh`**: Polls the local `system_health` RPC endpoint, evaluates peer counts/sync status, and diffs the output against previous runs to detect silent regressions.
+*   **`key_collection.sh`**: Iterates through a mock directory of FNOs to request public keys, saving state efficiently so subsequent runs only target non-responsive operators.
+*   **`maintenance_notify.sh`**: Simulates sending structured maintenance window alerts, tracks asynchronous acknowledgments, and flags operators who exceed the SLA timeout.
+
+---
+
+## 🔒 Security Posture
+
+Operational security, specifically regarding the generation, storage, and rotation of Validator Session Keys, is detailed in **[`SECURITY.md`](./SECURITY.md)**. 
+It covers cloud-native storage (KMS/Secrets Manager), HSM integration tradeoffs, and a strict 3-step Incident Response protocol for compromised credentials.
+
+---
+
+## 📌 Assumptions & Technical Debt
+
+As a senior engineering implementation, it is important to document assumptions and areas slated for future iteration:
+
+*   **Assumption - Ports:** We assume Prometheus exporter default ports (`9615` for Substrate) remain unmodified.
+*   **Assumption - Env:** Designed for Debian/Ubuntu (apt-based) environments.
+*   **Future Work - Full IaC:** Transition the bash-based `gcp_deploy.sh` to **Terraform** to manage state, VPCs, and IAM roles more robustly.
+*   **Future Work - Config Management:** Replace the `install_midnight_archive_node.sh` bash logic with **Ansible** playbooks for finer-grained idempotency and modular role separation between Cardano-node, Postgres, and Midnight-node.
