@@ -1,0 +1,61 @@
+---
+- name: Create directories for Midnight Node
+  become: yes
+  become_user: "{{ node_user }}"
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - "{{ node_home }}/data"
+    - "{{ node_home }}/res"
+    - "{{ node_home }}/tmp"
+
+- name: Download Midnight Node release
+  become: yes
+  become_user: "{{ node_user }}"
+  get_url:
+    url: "https://github.com/midnightntwrk/midnight-node/releases/download/node-0.22.5/midnight-node-0.22.5-linux-amd64.tar.gz"
+    dest: "{{ node_home }}/tmp/midnight-node-0.22.5.tar.gz"
+
+- name: Extract Midnight Node
+  become: yes
+  become_user: "{{ node_user }}"
+  unarchive:
+    src: "{{ node_home }}/tmp/midnight-node-0.22.5.tar.gz"
+    dest: "{{ node_home }}/tmp"
+    remote_src: yes
+
+- name: Move Midnight node binary
+  command: mv {{ node_home }}/tmp/midnight-node {{ node_home }}/.local/bin/
+  args:
+    creates: "{{ node_home }}/.local/bin/midnight-node"
+
+- name: Move Midnight res directory
+  command: mv {{ node_home }}/tmp/res {{ node_home }}/
+  args:
+    creates: "{{ node_home }}/res/preprod"
+
+- name: Ensure midnight-node is executable
+  file:
+    path: "{{ node_home }}/.local/bin/midnight-node"
+    mode: '0755'
+    owner: "{{ node_user }}"
+
+- name: Template env file
+  become: yes
+  become_user: "{{ node_user }}"
+  template:
+    src: env.j2
+    dest: "{{ node_home }}/.env"
+
+- name: Template Midnight Node systemd service
+  template:
+    src: midnight-node.service.j2
+    dest: /etc/systemd/system/midnight-node.service
+
+- name: Enable Midnight Node service
+  systemd:
+    name: midnight-node
+    enabled: yes
+    daemon_reload: yes

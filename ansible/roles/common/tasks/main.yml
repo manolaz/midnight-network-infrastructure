@@ -1,0 +1,27 @@
+---
+- name: Ensure base dependencies are installed
+  apt:
+    name:
+      - curl
+      - jq
+      - tar
+      - wget
+      - tmux
+      - htop
+      - build-essential
+      - acl
+      - libpq-dev
+    state: present
+    update_cache: yes
+
+- name: Ensure midnight group exists
+  group:
+    name: "{{ node_user }}"
+    state: present
+
+- name: Ensure midnight user exists
+  user:
+    name: "{{ node_user }}"
+    group: "{{ node_user }}"
+    shell: /bin/bash
+    create_home: yes

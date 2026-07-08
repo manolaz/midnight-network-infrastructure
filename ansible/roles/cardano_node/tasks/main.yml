@@ -1,0 +1,108 @@
+---
+- name: Create directories for Cardano Node and Mithril
+  become: yes
+  become_user: "{{ node_user }}"
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - "{{ node_home }}/tmp/mithril"
+    - "{{ node_home }}/.local/bin"
+    - "{{ node_home }}/.local/share"
+    - "{{ node_home }}/cardano-data"
+
+- name: Download Mithril installer script
+  become: yes
+  become_user: "{{ node_user }}"
+  get_url:
+    url: https://raw.githubusercontent.com/input-output-hk/mithril/refs/heads/main/mithril-install.sh
+    dest: "{{ node_home }}/tmp/mithril/mithril-install.sh"
+    mode: '0755'
+
+- name: Install Mithril client
+  become: yes
+  become_user: "{{ node_user }}"
+  command: >
+    sh mithril-install.sh -c mithril-client -d unstable -p {{ node_home }}/tmp/mithril
+  args:
+    chdir: "{{ node_home }}/tmp/mithril"
+    creates: "{{ node_home }}/tmp/mithril/mithril-client"
+
+- name: Check if Cardano database snapshot exists
+  stat:
+    path: "{{ node_home }}/cardano-data/db"
+  register: db_dir
+
+- name: Download Cardano database snapshot via Mithril (Takes time)
+  become: yes
+  become_user: "{{ node_user }}"
+  shell: |
+    export GENESIS_VERIFICATION_KEY=$(wget -q -O - https://raw.githubusercontent.com/input-output-hk/mithril/main/mithril-infra/configuration/pre-release-preprod/genesis.vkey)
+    export ANCILLARY_VERIFICATION_KEY=$(wget -q -O - https://raw.githubusercontent.com/input-output-hk/mithril/main/mithril-infra/configuration/pre-release-preprod/ancillary.vkey)
+    ./mithril-client cardano-db download --include-ancillary latest
+  environment:
+    CARDANO_NETWORK: preprod
+    AGGREGATOR_ENDPOINT: https://aggregator.pre-release-preprod.api.mithril.network/aggregator
+    SNAPSHOT_DIGEST: latest
+  args:
+    chdir: "{{ node_home }}/tmp/mithril"
+  when: not db_dir.stat.exists
+
+- name: Move downloaded snapshot to cardano-data
+  command: mv {{ node_home }}/tmp/mithril/db {{ node_home }}/cardano-data/
+  when: not db_dir.stat.exists
+
+- name: Change ownership of cardano-data
+  file:
+    path: "{{ node_home }}/cardano-data"
+    owner: "{{ node_user }}"
+    group: "{{ node_user }}"
+    recurse: yes
+    state: directory
+
+- name: Download Cardano Node release
+  become: yes
+  become_user: "{{ node_user }}"
+  get_url:
+    url: "https://github.com/IntersectMBO/cardano-node/releases/download/11.0.1/cardano-node-11.0.1-linux-amd64.tar.gz"
+    dest: "{{ node_home }}/tmp/cardano-node-11.0.1.tar.gz"
+
+- name: Extract Cardano Node bin
+  become: yes
+  become_user: "{{ node_user }}"
+  unarchive:
+    src: "{{ node_home }}/tmp/cardano-node-11.0.1.tar.gz"
+    dest: "{{ node_home }}/.local/bin"
+    extra_opts:
+      - --strip-components=2
+      - ./bin
+    remote_src: yes
+
+- name: Extract Cardano Node share
+  become: yes
+  become_user: "{{ node_user }}"
+  unarchive:
+    src: "{{ node_home }}/tmp/cardano-node-11.0.1.tar.gz"
+    dest: "{{ node_home }}/.local/share"
+    extra_opts:
+      - --strip-components=1
+      - ./share
+    remote_src: yes
+
+- name: Ensure cardano-node is executable
+  file:
+    path: "{{ node_home }}/.local/bin/cardano-node"
+    mode: '0755'
+
+- name: Template Cardano Node systemd service
+  template:
+    src: cardano-node.service.j2
+    dest: /etc/systemd/system/cardano-node.service
+
+- name: Start and enable Cardano Node
+  systemd:
+    name: cardano-node
+    state: started
+    enabled: yes
+    daemon_reload: yes

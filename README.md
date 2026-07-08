@@ -27,6 +27,15 @@ Designed with production-grade engineering principles, this setup explicitly han
 ├── README.md                           # Documentation entrypoint (this file)
 ├── RUNBOOK.md                          # Step-by-step manual FNO onboarding & recovery procedures
 ├── SECURITY.md                         # Threat modeling, key management & incident response protocols
+├── ansible/                            # Infrastructure as Code (Ansible Playbooks)
+│   ├── inventory/
+│   │   └── hosts.ini
+│   ├── setup_node.yml                  # Main playbook
+│   └── roles/
+│       ├── common/                     # Base dependencies and user management
+│       ├── postgres/                   # Database setup
+│       ├── cardano_node/               # Mithril snapshot and Cardano relay config
+│       └── midnight_node/              # Substrate node and archive mode setup
 ├── monitoring/
 │   ├── configs/
 │   │   ├── docker-compose.yml          # Containerized telemetry stack (Prometheus + Grafana)
@@ -57,8 +66,17 @@ gcloud auth login
 ```
 *The VM will boot and immediately execute `install_midnight_archive_node.sh` as `root`, safely configuring the `midnight` user environment and pulling the Mithril snapshots.*
 
-### Option 2: Manual / On-Premise Setup
-For bare-metal or custom cloud environments, refer to the **[`RUNBOOK.md`](./RUNBOOK.md)**. It provides a comprehensive, step-by-step guide for manually bootstrapping the Cardano dependencies and the Midnight node.
+### Option 2: Configuration Management (Ansible)
+For on-premise environments, bare-metal clusters, or existing VMs, the entire node setup has been codified into modular Ansible playbooks. This ensures fine-grained idempotency.
+
+```bash
+# Run the setup playbook locally (or against remote hosts via inventory)
+ansible-playbook -i ansible/inventory/hosts.ini ansible/setup_node.yml
+```
+*The playbook cleanly separates roles (`common`, `postgres`, `cardano_node`, `midnight_node`) so you can run, test, or re-run specific components without state drift.*
+
+### Option 3: Manual / On-Premise Setup
+For a step-by-step educational guide on bootstrapping the Cardano dependencies and the Midnight node manually, refer to **[`RUNBOOK.md`](./RUNBOOK.md)**.
 
 ---
 
@@ -91,11 +109,10 @@ It covers cloud-native storage (KMS/Secrets Manager), HSM integration tradeoffs,
 
 ---
 
-## 📌 Assumptions & Technical Debt
+## 📌 Assumptions & Future Work
 
 As a senior engineering implementation, it is important to document assumptions and areas slated for future iteration:
 
 *   **Assumption - Ports:** We assume Prometheus exporter default ports (`9615` for Substrate) remain unmodified.
 *   **Assumption - Env:** Designed for Debian/Ubuntu (apt-based) environments.
 *   **Future Work - Full IaC:** Transition the bash-based `gcp_deploy.sh` to **Terraform** to manage state, VPCs, and IAM roles more robustly.
-*   **Future Work - Config Management:** Replace the `install_midnight_archive_node.sh` bash logic with **Ansible** playbooks for finer-grained idempotency and modular role separation between Cardano-node, Postgres, and Midnight-node.

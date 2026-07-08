@@ -1,0 +1,25 @@
+[Unit]
+Description=Midnight Archive Node
+Wants=network-online.target
+After=network-online.target cardano-node.service
+
+[Service]
+User={{ node_user }}
+Type=simple
+EnvironmentFile={{ node_home }}/.env
+WorkingDirectory={{ node_home }}/data
+ExecStart={{ node_home }}/.local/bin/midnight-node \
+    --chain {{ node_home }}/res/preprod/chain-spec-raw.json \
+    --base-path {{ node_home }}/data \
+    --name {{ midnight_node_name }} \
+    --pruning archive \
+    --rpc-external \
+    --rpc-cors all \
+    --no-private-ip
+KillSignal=SIGINT
+Restart=always
+RestartSec=10
+LimitNOFILE=32768
+
+[Install]
+WantedBy=multi-user.target

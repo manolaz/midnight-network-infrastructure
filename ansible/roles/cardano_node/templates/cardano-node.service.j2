@@ -1,0 +1,23 @@
+[Unit]
+Description=Cardano Relay Node
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User={{ node_user }}
+Type=simple
+WorkingDirectory={{ node_home }}/cardano-data
+ExecStart={{ node_home }}/.local/bin/cardano-node run \
+    --topology {{ node_home }}/.local/share/preprod/topology.json \
+    --database-path {{ node_home }}/cardano-data/db \
+    --socket-path {{ node_home }}/cardano-data/db/node.socket \
+    --host-addr 0.0.0.0 \
+    --port 3001 \
+    --config {{ node_home }}/.local/share/preprod/config.json
+KillSignal=SIGINT
+Restart=always
+RestartSec=5
+LimitNOFILE=32768
+
+[Install]
+WantedBy=multi-user.target
