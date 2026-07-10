@@ -1,9 +1,9 @@
-# Runbook for Midnight Network Pre-Production Environment
+# Runbook for Midnight Network Infrastructure
 
 ## Section 1: FNO (Full Node Operator) Onboarding Steps
 
 ### Prerequisites
-- Access to a Linux-based server (x86-64/amd64 architecture).
+- Access to a Linux-based server (x86-64/amd64 architecture, Ubuntu 22.04 LTS).
 - Sufficient resources (CPU, memory, and storage) for both Cardano and Midnight nodes.
 - SSH access with sudo privileges.
 - Firewall configured to allow required ports:
@@ -12,92 +12,27 @@
   - 3001 (Cardano Node P2P)
   - 5432 (PostgreSQL)
 
-> **⚠️ CRITICAL PREREQUISITE:** Cardano DB Sync is a hard prerequisite for the Midnight node stack. The Midnight node requires a persistent connection to a PostgreSQL database populated by Cardano-db-sync. Syncing takes a minimum of 6 hours against pre-prod. **Do not attempt to run the Midnight node until DB Sync is fully completed.**
+> **⚠️ CRITICAL PREREQUISITE:** Cardano DB Sync is a hard prerequisite for the Midnight node stack. The Midnight node requires a persistent connection to a PostgreSQL 17 database populated by Cardano-db-sync. Syncing takes a minimum of 6 hours against pre-prod. **Do not attempt to run the Midnight node until DB Sync is fully completed.**
 
-> **🚀 AUTOMATED SETUP:** A fully reproducible shell script is available at `scripts/install_midnight_archive_node.sh` to automate Steps 1 and 3 of this guide.
-
----
-
-### Step 1: Cardano Relay Node & Mithril Setup
-Midnight operates as a partner chain to Cardano. We use Mithril to download a verified snapshot to reduce sync time.
-
-1. **Install Mithril Tooling:**
-   ```bash
-   mkdir -p $HOME/tmp/mithril && cd $HOME/tmp/mithril
-   curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/input-output-hk/mithril/refs/heads/main/mithril-install.sh | sh -s -- -c mithril-signer -d unstable -p $(pwd)
-   curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/input-output-hk/mithril/refs/heads/main/mithril-install.sh | sh -s -- -c mithril-client -d unstable -p $(pwd)
-   curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/input-output-hk/mithril/refs/heads/main/mithril-install.sh | sh -s -- -c mithril-aggregator -d unstable -p $(pwd)
-   ```
-
-2. **Configure Mithril for Preprod:**
-   ```bash
-   export CARDANO_NETWORK=preprod
-   export AGGREGATOR_ENDPOINT=https://aggregator.pre-release-preprod.api.mithril.network/aggregator
-   export GENESIS_VERIFICATION_KEY=$(wget -q -O - https://raw.githubusercontent.com/input-output-hk/mithril/main/mithril-infra/configuration/pre-release-preprod/genesis.vkey)
-   export ANCILLARY_VERIFICATION_KEY=$(wget -q -O - https://raw.githubusercontent.com/input-output-hk/mithril/main/mithril-infra/configuration/pre-release-preprod/ancillary.vkey)
-   export SNAPSHOT_DIGEST=latest
-   ```
-
-3. **Download Snapshot:**
-   ```bash
-   ./mithril-client cardano-db download --include-ancillary $SNAPSHOT_DIGEST
-   ```
-
-4. **Install Cardano Node:**
-   ```bash
-   VERSION="11.0.1"
-   ARCH="linux-amd64"
-   URL="https://github.com/IntersectMBO/cardano-node/releases/download/${VERSION}/cardano-node-${VERSION}-${ARCH}.tar.gz"
-   
-   mkdir -p ~/.local/bin ~/.local/share
-   curl -L "$URL" | tar -xz -C ~/.local/bin --strip-components=2 ./bin
-   curl -L "$URL" | tar -xz -C ~/.local/share --strip-components=1 ./share
-   chmod +x ~/.local/bin/cardano-*
-   ```
-
-5. **Inject Mithril Snapshot and Start Cardano Node:**
-   ```bash
-   mkdir ~/cardano-data
-   mv ~/tmp/mithril/db/ ~/cardano-data/
-   
-   # Set up systemd service to run cardano-node
-   sudo tee /etc/systemd/system/cardano-node.service > /dev/null <<SERVICE
-   [Unit]
-   Description=Cardano Relay Node
-   Wants=network-online.target
-   After=network-online.target
-
-   [Service]
-   User=$USER
-   Type=simple
-   WorkingDirectory=$HOME/cardano-data
-   ExecStart=$HOME/.local/bin/cardano-node run \
-       --topology $HOME/.local/share/preprod/topology.json \
-       --database-path $HOME/cardano-data/db \
-       --socket-path $HOME/cardano-data/db/node.socket \
-       --host-addr 0.0.0.0 \
-       --port 3001 \
-       --config $HOME/.local/share/preprod/config.json
-   KillSignal=SIGINT
-   Restart=always
-   RestartSec=5
-   LimitNOFILE=32768
-
-   [Install]
-   WantedBy=multi-user.target
-   SERVICE
-   
-   sudo systemctl daemon-reload
-   sudo systemctl enable --now cardano-node
-   ```
+> **🚀 AUTOMATED SETUP (Recommended):** A fully reproducible cloud-init compatible shell script is available at `scripts/install_midnight_archive_node.sh`. It automatically invokes Ansible to configure the entire stack for Preview, Preprod, or Mainnet.
+> Usage: `sudo ./scripts/install_midnight_archive_node.sh [NETWORK]`
 
 ---
 
-### Step 2: Cardano DB Sync & PostgreSQL Setup
-*(Assuming PostgreSQL 17 is installed and accessible)*
+### Manual Setup (For Reference / Troubleshooting)
 
-1. **Configure PostgreSQL:**
-   Ensure PostgreSQL is running on port 5432 and the `midnight` user has access to a database (e.g., `cexplorer`).
+The underlying Ansible playbooks (`ansible/setup_node.yml`) orchestrate the following:
+
+1. **PostgreSQL 17 Setup:** Installs PostgreSQL from the official APT repository, creates a `midnight` user, `cexplorer` database, tunes indexing params, and drops `.pgpass`.
+2. **Cardano Relay Node & Mithril:** Downloads Mithril, syncs the latest environment snapshot, downloads the `cardano-node` release, and templates `cardano-node.service`.
+3. **Cardano DB Sync:** Downloads the db-sync release, downloads the network-specific JSON configuration, extracts the SQL schemas, and templates `cardano-db-sync.service`.
+4. **Midnight Node:** Downloads the Midnight binary, provisions network specs, templates `midnight-node.service` with conditional flags for RPC, Bootnode, and Archive pruning.
+
+To invoke this manually without the wrapper script:
+```bash
+sudo apt-get install -y ansible
+ansible-playbook -i localhost, -c local ansible/setup_node.yml --extra-vars "network=preprod"
+```
 
 2. **Start Cardano DB Sync:**
    Run `cardano-db-sync` connected to the `cardano-node` socket to populate the PostgreSQL database.

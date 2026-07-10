@@ -1,12 +1,12 @@
-# 🌑 Midnight Network: Pre-Production FNO Infrastructure
+# 🌑 Midnight Network: Infrastructure Automation
 
-[![Midnight Network](https://img.shields.io/badge/Network-Pre--Production-purple.svg)]()
+[![Midnight Network](https://img.shields.io/badge/Network-Preview_%7C_Pre--Production_%7C_Mainnet-purple.svg)]()
 [![Infrastructure](https://img.shields.io/badge/Infrastructure-GCP_Automated-blue.svg)]()
 [![Observability](https://img.shields.io/badge/Observability-Prometheus_%7C_Grafana-orange.svg)]()
 
 ## 📑 Executive Summary
 
-This repository encapsulates the deployment scripts, operational runbooks, observability stack, and Day-2 automation tooling required to securely operate a **Full Node Operator (FNO)** on the Midnight Pre-Production network. 
+This repository encapsulates the deployment scripts, operational runbooks, observability stack, and Day-2 automation tooling required to securely operate a **Full Node Operator (FNO)** on the Midnight Networks (Preview, Pre-Production, and Mainnet). 
 
 Designed with production-grade engineering principles, this setup explicitly handles Midnight's architecture as a Cardano Partner Chain. It systematically orchestrates the critical dependencies—Mithril snapshotting, Cardano Relay sync, and PostgreSQL database initialization via `cardano-db-sync`—before bootstrapping the Midnight Substrate runtime.
 
@@ -33,8 +33,9 @@ Designed with production-grade engineering principles, this setup explicitly han
 │   ├── setup_node.yml                  # Main playbook
 │   └── roles/
 │       ├── common/                     # Base dependencies and user management
-│       ├── postgres/                   # Database setup
+│       ├── postgres/                   # PostgreSQL 17 configuration & tuning
 │       ├── cardano_node/               # Mithril snapshot and Cardano relay config
+│       ├── cardano_db_sync/            # Cardano DB Sync daemon integration
 │       └── midnight_node/              # Substrate node and archive mode setup
 ├── monitoring/
 │   ├── configs/
@@ -71,7 +72,8 @@ For on-premise environments, bare-metal clusters, or existing VMs, the entire no
 
 ```bash
 # Run the setup playbook locally (or against remote hosts via inventory)
-ansible-playbook -i ansible/inventory/hosts.ini ansible/setup_node.yml
+# Provide the target network via extra-vars: 'preview', 'preprod', or 'mainnet'
+ansible-playbook -i ansible/inventory/hosts.ini ansible/setup_node.yml --extra-vars "network=preprod"
 ```
 *The playbook cleanly separates roles (`common`, `postgres`, `cardano_node`, `midnight_node`) so you can run, test, or re-run specific components without state drift.*
 
