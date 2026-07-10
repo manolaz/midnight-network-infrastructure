@@ -1,17 +1,20 @@
-## Describe your changes
-<!-- Provide a clear and concise description of what this PR does. -->
+## Description
 
-## Related Issues
-<!-- Link any related open issues (e.g., Fixes #123) -->
+Please include a summary of the change and which issue is fixed. Please also include relevant motivation and context.
 
-## How Has This Been Tested?
-<!-- Describe the tests that you ran to verify your changes. Include details about the network target (Preview/Preprod) and OS. -->
-- [ ] Local deployment via `make deploy network=preview`
-- [ ] Deployed to GCP via `make deploy-gcp`
-- [ ] Ansible syntax checks passed
+Fixes # (issue)
+
+## Type of change
+
+- [ ] Bug fix (non-breaking change which fixes an issue)
+- [ ] New feature (non-breaking change which adds functionality)
+- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
+- [ ] This change requires a documentation update
 
 ## Checklist:
-- [ ] I have read the `CONTRIBUTING.md` document.
-- [ ] My code follows the strict bash mode (`set -euo pipefail`).
-- [ ] `make lint` passes locally with no new warnings.
-- [ ] I have updated the documentation accordingly (`README.md`, `RUNBOOK.md`).
+
+- [ ] My code follows the style guidelines of this project
+- [ ] I have performed a self-review of my own code
+- [ ] I have commented my code, particularly in hard-to-understand areas
+- [ ] I have made corresponding changes to the documentation
+- [ ] My changes generate no new warnings

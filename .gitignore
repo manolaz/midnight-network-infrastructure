@@ -1,0 +1,47 @@
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Ansible
+*.retry
+scripts/ansible/roles/galaxy
+scripts/ansible/collections/
+.ansible/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Logs
+*.log
+logs/
+
+# IDE / Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Secrets / Keys
+*.pem
+*.key
+*.pub
+data/key_collection_state.json
+data/operators.json
+
+# Pre-commit
+.pre-commit-config.yaml.rej

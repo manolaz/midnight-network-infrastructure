@@ -1,0 +1,9 @@
+# This file is used to define code owners for specific files or directories.
+*       @tristan-midnight-network
+
+[Infrastructure]
+scripts/terraform/ @tristan-midnight-network
+scripts/ansible/   @tristan-midnight-network
+
+[Monitoring]
+monitoring/        @tristan-midnight-network
