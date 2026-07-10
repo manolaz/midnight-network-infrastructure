@@ -63,12 +63,19 @@ graph TD
     │       ├── cardano_db_sync/        # Cardano DB Sync daemon integration
     │       └── midnight_node/          # Substrate node and archive mode setup
     ├── terraform/                      # Infrastructure as Code (Terraform)
-    │   ├── main.tf                     # Provider and backend configuration
-    │   ├── variables.tf                # Input variables
-    │   ├── network.tf                  # VPC, subnets, and firewall rules
-    │   ├── iam.tf                      # Service accounts and IAM roles
-    │   ├── compute.tf                  # Compute instance configuration
-    │   └── outputs.tf                  # Outputs (IPs, SSH commands)
+    │   ├── gcp/                        # GCP Deployment
+    │   │   ├── main.tf                 # Provider and backend configuration
+    │   │   ├── variables.tf            # Input variables
+    │   │   ├── network.tf              # VPC, subnets, and firewall rules
+    │   │   ├── iam.tf                  # Service accounts and IAM roles
+    │   │   ├── compute.tf              # Compute instance configuration
+    │   │   └── outputs.tf              # Outputs (IPs, SSH commands)
+    │   └── aws/                        # AWS Deployment
+    │       ├── main.tf                 # Provider configuration
+    │       ├── variables.tf            # Input variables
+    │       ├── network.tf              # Security Groups and VPC data
+    │       ├── compute.tf              # EC2 instance and IAM Profile
+    │       └── outputs.tf              # Outputs (IPs, SSH commands)
     ├── gcp_deploy.sh                   # (DEPRECATED) GCP VM provisioning automation
     ├── install_midnight_archive_node.sh # Cloud-Init target: Zero-touch node setup
     ├── health_check.sh                 # Day-2: RPC-based health & regression monitoring (Option C)
@@ -83,7 +90,8 @@ graph TD
 Depending on your chosen deployment method, ensure you have the following tools installed:
 
 - **Google Cloud CLI (`gcloud`)**: Required for authenticating and deploying to GCP.
-- **Terraform (`>= 1.5.0`)**: Required for the Infrastructure as Code (GCP) deployment.
+- **AWS CLI (`aws`)**: Required for authenticating and deploying to AWS.
+- **Terraform (`>= 1.5.0`)**: Required for the Infrastructure as Code (GCP/AWS) deployment.
 - **Ansible (`>= 2.14`)**: Required for configuration management and bare-metal/on-prem deployments.
 - **Git**: For cloning and interacting with the repository.
 
@@ -91,7 +99,7 @@ Depending on your chosen deployment method, ensure you have the following tools 
 
 ## 🚀 Deployment Operations
 
-### Option 1: Infrastructure as Code (Terraform on GCP)
+### Option 1A: Infrastructure as Code (Terraform on GCP)
 For frictionless, reproducible infrastructure, Terraform is used to provision the network, IAM roles, firewall rules, and an `e2-standard-4` (Ubuntu 22.04, 500GB SSD) compute instance on Google Cloud. 
 
 ```bash
@@ -99,11 +107,25 @@ For frictionless, reproducible infrastructure, Terraform is used to provision th
 gcloud auth application-default login
 
 # Initialize and apply the Terraform configuration
-cd scripts/terraform
+cd scripts/terraform/gcp
 terraform init
 terraform apply -var="project_id=[YOUR_PROJECT_ID]" -var="target_network=preprod"
 ```
 *The VM will boot and immediately execute `install_midnight_archive_node.sh` via cloud-init, safely configuring the `midnight` user environment and pulling the Mithril snapshots.*
+
+### Option 1B: Infrastructure as Code (Terraform on AWS)
+Alternatively, you can provision an equivalent node (`t3.xlarge` with 500GB gp3 storage) on Amazon Web Services.
+
+```bash
+# Authenticate with AWS
+aws configure
+
+# Initialize and apply the Terraform configuration
+cd scripts/terraform/aws
+terraform init
+terraform apply -var="key_name=[YOUR_AWS_KEY_PAIR]" -var="target_network=preprod"
+```
+*The EC2 instance will boot and execute the installation script via `user_data`.*
 
 ### Option 2: Configuration Management (Ansible)
 For on-premise environments, bare-metal clusters, or existing VMs, the entire node setup has been codified into modular Ansible playbooks. This ensures fine-grained idempotency.
