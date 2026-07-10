@@ -13,7 +13,7 @@ jobs:
     name: Terraform Security Scan (tfsec)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Run tfsec
         uses: aquasecurity/tfsec-pr-commenter-action@v1.3.1
         with:
@@ -24,7 +24,7 @@ jobs:
     name: Trivy Vulnerability Scanner
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Run Trivy vulnerability scanner in repo mode
         uses: aquasecurity/trivy-action@master
         with:

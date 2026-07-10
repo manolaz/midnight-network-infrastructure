@@ -11,7 +11,7 @@ jobs:
     name: ShellCheck
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Run ShellCheck on all scripts
         uses: ludeeus/action-shellcheck@master
         with:
@@ -21,7 +21,7 @@ jobs:
     name: Ansible Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -38,7 +38,7 @@ jobs:
       run:
         working-directory: ./scripts/terraform
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
@@ -60,7 +60,7 @@ jobs:
     name: Markdown Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Markdown Lint
         uses: articulate/actions-markdownlint@v1
         with:
