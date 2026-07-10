@@ -18,6 +18,24 @@ Designed with production-grade engineering principles, this setup explicitly han
 2. **Data Availability (Archive Mode):** To support local indexers, block explorers, and rigorous testnet transaction tracking, the node defaults to `--pruning archive`. RPC WebSocket endpoints are explicitly exposed with strict CORS boundaries.
 3. **Cloud-Native & Idempotent:** Shell scripts are engineered to be `cloud-init` compliant, allowing for zero-touch infrastructure provisioning on cloud providers like Google Cloud Platform (GCP).
 
+### System Architecture
+
+```mermaid
+graph TD
+    subgraph "Cloud Provider (GCP) / Local Host"
+        subgraph "Midnight FNO Node"
+            A[Mithril Client] -->|Downloads Snapshots| B[(Cardano Chain Data)]
+            C[Cardano Relay Node] -->|Syncs Blocks| B
+            D[PostgreSQL DB] 
+            E[Cardano DB Sync] -->|Reads from Cardano Node| C
+            E -->|Writes structured data| D
+            F[Midnight Substrate Node] -->|Queries state| D
+            F -->|Listens & Syncs| G((Midnight Network P2P))
+            C -->|Listens & Syncs| H((Cardano Network P2P))
+        end
+    end
+```
+
 ---
 
 ## 📂 Repository Structure
@@ -57,6 +75,17 @@ Designed with production-grade engineering principles, this setup explicitly han
     ├── key_collection.sh               # Day-2: Idempotent FNO public key collector (Option A)
     └── maintenance_notify.sh           # Day-2: Automated maintenance notification & ACK tracking (Option B)
 ```
+
+---
+
+## ✅ Prerequisites
+
+Depending on your chosen deployment method, ensure you have the following tools installed:
+
+- **Google Cloud CLI (`gcloud`)**: Required for authenticating and deploying to GCP.
+- **Terraform (`>= 1.5.0`)**: Required for the Infrastructure as Code (GCP) deployment.
+- **Ansible (`>= 2.14`)**: Required for configuration management and bare-metal/on-prem deployments.
+- **Git**: For cloning and interacting with the repository.
 
 ---
 
