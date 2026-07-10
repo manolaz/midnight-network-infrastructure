@@ -1,10 +1,21 @@
 #!/bin/bash
 # ==============================================================================
-# Midnight Node GCP Deployment Script
-# Description: Provisions a Google Cloud Platform VM and configures the firewall 
-#              to run the Midnight Archive Node automatically via startup-script.
-# Usage: ./gcp_deploy.sh [PROJECT_ID] [ZONE]
+# Midnight Node GCP Deployment Script (DEPRECATED)
+# Description: This script has been deprecated in favor of Terraform.
+#              Please see the terraform/ directory for infrastructure deployment.
 # ==============================================================================
+
+echo "========================================================================"
+echo "[!] DEPRECATION WARNING: gcp_deploy.sh is no longer supported."
+echo "    Please use Terraform to provision your infrastructure."
+echo "    "
+echo "    Migration steps:"
+echo "    1. cd terraform/"
+echo "    2. terraform init"
+echo "    3. terraform plan -var=\"project_id=YOUR_PROJECT\""
+echo "    4. terraform apply -var=\"project_id=YOUR_PROJECT\""
+echo "========================================================================"
+exit 1
 
 set -euo pipefail
 trap 'echo "[!] Error occurred at line $LINENO. Exiting."; exit 1' ERR
