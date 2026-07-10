@@ -62,17 +62,19 @@ Designed with production-grade engineering principles, this setup explicitly han
 
 ## 🚀 Deployment Operations
 
-### Option 1: Automated Cloud Provisioning (GCP)
-For frictionless, reproducible infrastructure, a wrapper script is provided to provision an `e2-standard-4` (Ubuntu 22.04, 500GB SSD) instance on Google Cloud. 
+### Option 1: Infrastructure as Code (Terraform on GCP)
+For frictionless, reproducible infrastructure, Terraform is used to provision the network, IAM roles, firewall rules, and an `e2-standard-4` (Ubuntu 22.04, 500GB SSD) compute instance on Google Cloud. 
 
 ```bash
 # Authenticate with Google Cloud
-gcloud auth login
+gcloud auth application-default login
 
-# Deploy the FNO stack (Automatically sets up firewalls, VMs, and cloud-init scripts)
-./scripts/gcp_deploy.sh [YOUR_PROJECT_ID] [COMPUTE_ZONE]
+# Initialize and apply the Terraform configuration
+cd scripts/terraform
+terraform init
+terraform apply -var="project_id=[YOUR_PROJECT_ID]" -var="target_network=preprod"
 ```
-*The VM will boot and immediately execute `install_midnight_archive_node.sh` as `root`, safely configuring the `midnight` user environment and pulling the Mithril snapshots.*
+*The VM will boot and immediately execute `install_midnight_archive_node.sh` via cloud-init, safely configuring the `midnight` user environment and pulling the Mithril snapshots.*
 
 ### Option 2: Configuration Management (Ansible)
 For on-premise environments, bare-metal clusters, or existing VMs, the entire node setup has been codified into modular Ansible playbooks. This ensures fine-grained idempotency.
