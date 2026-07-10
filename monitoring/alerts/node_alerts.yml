@@ -9,7 +9,7 @@ groups:
       severity: critical
     annotations:
       summary: "Node is not syncing blocks"
-      description: "The best block height has not increased in 5 minutes."
+      description: "The best block height on {{ $labels.instance }} has not increased in 5 minutes."
 
   # 2. Peer count drops below a threshold
   - alert: LowPeerCount
@@ -19,14 +19,44 @@ groups:
       severity: warning
     annotations:
       summary: "Node has low peer count"
-      description: "The node has fewer than 5 peers for over 5 minutes."
+      description: "The node {{ $labels.instance }} has fewer than 5 peers (current: {{ $value }}) for over 5 minutes."
 
   # 3. High CPU Usage
   - alert: HighCpuUsage
     expr: rate(process_cpu_seconds_total[5m]) > 0.85
-    for: 10m
+    for: 5m
     labels:
       severity: warning
     annotations:
       summary: "High CPU usage on node"
-      description: "Process CPU usage is over 85% for 10 minutes."
+      description: "Process CPU usage is over 85% for 5 minutes on {{ $labels.instance }}."
+
+  # 4. High Memory Usage
+  - alert: HighMemoryUsage
+    expr: process_resident_memory_bytes > 3e+09  # 3GB
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High Memory usage on node"
+      description: "Node process is using more than 3GB of RAM on {{ $labels.instance }}."
+
+  # 5. Process crash / down
+  - alert: NodeDown
+    expr: up{job="midnight_node"} == 0
+    for: 3m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Midnight node is unreachable"
+      description: "The Midnight node exporter on {{ $labels.instance }} has been down for more than 3 minutes."
+
+  # 6. Service restart detected
+  - alert: NodeRestarted
+    expr: time() - process_start_time_seconds{job="midnight_node"} < 300
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Node service recently restarted"
+      description: "The Midnight node process on {{ $labels.instance }} restarted in the last 5 minutes."
