@@ -5,10 +5,14 @@
 #              (Preview/Preprod/Mainnet). Enables keeping historical states to 
 #              track transactions and enables RPC options for indexers/explorers.
 #              This complements the instructions in RUNBOOK.md.
-# Usage: sudo ./install_midnight_archive_node.sh
+# Usage: sudo ./install_midnight_archive_node.sh [NETWORK]
 # ==============================================================================
 
-set -e
+set -euo pipefail
+trap 'echo "[!] Error occurred at line $LINENO. Exiting."; exit 1' ERR
+
+TARGET_NETWORK=${1:-preprod}
+echo "[*] Target Network: $TARGET_NETWORK"
 
 if [ "$EUID" -eq 0 ]; then
   echo "[*] Running as root (e.g., GCP Startup Script). Setting up 'midnight' user..."
@@ -42,9 +46,9 @@ if [ ! -f "ansible/setup_node.yml" ]; then
     exit 1
 fi
 
-ansible-playbook -i localhost, -c local ansible/setup_node.yml
+ansible-playbook -i localhost, -c local ansible/setup_node.yml --extra-vars "network=$TARGET_NETWORK"
 
-echo "[*] Node setup complete. Check the status of the following services:"
+echo "========================================================================"
 echo "    - sudo systemctl status postgresql"
 echo "    - sudo systemctl status cardano-node"
 echo "    - sudo systemctl status cardano-db-sync"

@@ -1,0 +1,32 @@
+name: Infrastructure Linting & Validation
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run ShellCheck on all scripts
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: './scripts'
+
+  ansible-lint:
+    name: Ansible Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install ansible-lint
+        run: pip install ansible-lint
+      - name: Run ansible-lint
+        run: ansible-lint ansible/setup_node.yml

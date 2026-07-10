@@ -94,6 +94,14 @@ Alerts are designed with a high signal-to-noise ratio to prevent alert fatigue:
 
 ---
 
+## 🤝 Contributing
+
+We welcome contributions from the open-source community! Whether it's adding support for AWS/Azure, improving monitoring dashboards, or fixing typos.
+
+Please see our [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on how to submit pull requests, run the linters, and utilize the included `Makefile`. We enforce a strict [Code of Conduct](CODE_OF_CONDUCT.md).
+
+---
+
 ## 🛠 Day-2 Automation Tools
 
 Operational scripts (located in `scripts/`) are built with idempotency and structured output (JSON) in mind, allowing them to be seamlessly integrated into CI/CD pipelines or cron jobs.
