@@ -13,8 +13,16 @@ ExecStart={{ node_home }}/.local/bin/midnight-node \
     --base-path {{ node_home }}/data \
     --name {{ midnight_node_name }} \
     --pruning archive \
+{% if is_rpc_node | default(true) %}
     --rpc-external \
     --rpc-cors all \
+    --rpc-port 9944 \
+    --rpc-methods Safe \
+{% endif %}
+{% if is_boot_node | default(false) %}
+    --listen-addr /ip4/0.0.0.0/tcp/30333 \
+    --bootnodes /dns/bootnode-1.preprod.midnight.network/tcp/30333/ws/p2p/12D3KooWK66i7dtGVNSwDh9tTeqov1q6LSdWsRLJvTyzTCaywYgK \
+{% endif %}
     --no-private-ip
 KillSignal=SIGINT
 Restart=always

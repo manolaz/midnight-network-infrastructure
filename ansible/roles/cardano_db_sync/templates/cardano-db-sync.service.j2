@@ -1,0 +1,22 @@
+[Unit]
+Description=Cardano DB Sync
+After=cardano-node.service
+Requires=cardano-node.service
+
+[Service]
+User={{ node_user }}
+Type=simple
+Environment="PGPASSFILE={{ node_home }}/.pgpass"
+WorkingDirectory={{ node_home }}/cardano-data
+ExecStart={{ node_home }}/.local/bin/cardano-db-sync \
+    --config {{ node_home }}/cardano-data/db-sync-config.json \
+    --socket-path {{ node_home }}/cardano-data/db/node.socket \
+    --schema-dir {{ node_home }}/cardano-data/schema \
+    --state-dir {{ node_home }}/cardano-data/db-sync-state
+KillSignal=SIGINT
+Restart=always
+RestartSec=10
+LimitNOFILE=32768
+
+[Install]
+WantedBy=multi-user.target

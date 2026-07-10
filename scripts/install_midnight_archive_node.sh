@@ -22,82 +22,34 @@ fi
 
 echo "[*] Using user: $NODE_USER, home directory: $USER_HOME"
 
-# 1. Update and install dependencies
-echo "[*] Step 1: Installing dependencies..."
+# 1. Update and install Ansible
+echo "[*] Step 1: Installing Ansible..."
 sudo apt-get update
-sudo apt-get install -y curl jq tar wget tmux htop build-essential postgresql
+sudo apt-get install -y software-properties-common
+sudo add-apt-repository --yes --update ppa:ansible/ansible
+sudo apt-get install -y ansible git curl
 
-# 2. Setup Mithril and Cardano Node Snapshot
-echo "[*] Step 2: Setting up Mithril & downloading snapshot..."
-mkdir -p "$USER_HOME/tmp/mithril"
-cd "$USER_HOME/tmp/mithril"
-curl --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/input-output-hk/mithril/refs/heads/main/mithril-install.sh | sh -s -- -c mithril-client -d unstable -p $(pwd)
+# 2. Setup local inventory and run playbook
+echo "[*] Step 2: Running Ansible Playbook for Full Node Provisioning..."
 
-export CARDANO_NETWORK=preprod
-export AGGREGATOR_ENDPOINT=https://aggregator.pre-release-preprod.api.mithril.network/aggregator
-export GENESIS_VERIFICATION_KEY=$(wget -q -O - https://raw.githubusercontent.com/input-output-hk/mithril/main/mithril-infra/configuration/pre-release-preprod/genesis.vkey)
-export ANCILLARY_VERIFICATION_KEY=$(wget -q -O - https://raw.githubusercontent.com/input-output-hk/mithril/main/mithril-infra/configuration/pre-release-preprod/ancillary.vkey)
-export SNAPSHOT_DIGEST=latest
+# Ensure we are in the correct directory. If running as a GCP startup script, 
+# we might need to pull the repo first, but assuming the repo is copied or we are in it:
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$REPO_DIR"
 
-./mithril-client cardano-db download --include-ancillary $SNAPSHOT_DIGEST
+if [ ! -f "ansible/setup_node.yml" ]; then
+    echo "[!] Error: Cannot find ansible/setup_node.yml. Ensure you are running this from the repository root."
+    exit 1
+fi
 
-# 3. Install Cardano Node
-echo "[*] Step 3: Installing Cardano Node..."
-VERSION="11.0.1"
-ARCH="linux-amd64"
-URL="https://github.com/IntersectMBO/cardano-node/releases/download/${VERSION}/cardano-node-${VERSION}-${ARCH}.tar.gz"
+ansible-playbook -i localhost, -c local ansible/setup_node.yml
 
-mkdir -p "$USER_HOME/.local/bin" "$USER_HOME/.local/share"
-curl -L "$URL" | tar -xz -C "$USER_HOME/.local/bin" --strip-components=2 ./bin
-curl -L "$URL" | tar -xz -C "$USER_HOME/.local/share" --strip-components=1 ./share
-chmod +x $USER_HOME/.local/bin/cardano-*
+echo "[*] Node setup complete. Check the status of the following services:"
+echo "    - sudo systemctl status postgresql"
+echo "    - sudo systemctl status cardano-node"
+echo "    - sudo systemctl status cardano-db-sync"
+echo "    - sudo systemctl status midnight-node"
 
-mkdir -p "$USER_HOME/cardano-data"
-mv "$USER_HOME/tmp/mithril/db/" "$USER_HOME/cardano-data/"
-
-# Note: systemd setup for cardano-node is in RUNBOOK.md
-# We will create a unit file here as well.
-echo "[*] Step 4: Creating Cardano Node systemd service..."
-sudo tee /etc/systemd/system/cardano-node.service > /dev/null <<SERVICE
-[Unit]
-Description=Cardano Relay Node
-Wants=network-online.target
-After=network-online.target
-
-[Service]
-User=$NODE_USER
-Type=simple
-WorkingDirectory=$USER_HOME/cardano-data
-ExecStart=$USER_HOME/.local/bin/cardano-node run \
-    --topology $USER_HOME/.local/share/preprod/topology.json \
-    --database-path $USER_HOME/cardano-data/db \
-    --socket-path $USER_HOME/cardano-data/db/node.socket \
-    --host-addr 0.0.0.0 \
-    --port 3001 \
-    --config $USER_HOME/.local/share/preprod/config.json
-KillSignal=SIGINT
-Restart=always
-RestartSec=5
-LimitNOFILE=32768
-
-[Install]
-WantedBy=multi-user.target
-SERVICE
-
-sudo systemctl daemon-reload
-
-# 4. Install Midnight Node
-echo "[*] Step 5: Installing Midnight Node..."
-mkdir -p "$USER_HOME/data" "$USER_HOME/res" "$USER_HOME/.local/bin" "$USER_HOME/tmp"
-cd "$USER_HOME/tmp"
-curl -L -O https://github.com/midnightntwrk/midnight-node/releases/download/node-0.22.5/midnight-node-0.22.5-linux-amd64.tar.gz
-tar -xvzf midnight-node-0.22.5-linux-amd64.tar.gz
-mv "$USER_HOME/tmp/midnight-node" "$USER_HOME/.local/bin/"
-mv "$USER_HOME/tmp/res" "$USER_HOME/"
-
-# Create Environment file
-cat << 'ENV' > "$USER_HOME/.env"
-export POSTGRES_HOST="localhost"
 export POSTGRES_DB="cexplorer"
 export POSTGRES_PORT="5432"
 export POSTGRES_USER="midnight"

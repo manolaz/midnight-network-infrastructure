@@ -9,8 +9,11 @@
     db_password: YOUR_POSTGRES_PASSWORD
     db_name: cexplorer
     midnight_node_name: midnight-archive-node
+    is_rpc_node: true
+    is_boot_node: false
   roles:
     - common
     - postgres
     - cardano_node
+    - cardano_db_sync
     - midnight_node

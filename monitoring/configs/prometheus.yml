@@ -8,5 +8,9 @@ rule_files:
 scrape_configs:
   - job_name: 'midnight_node'
     static_configs:
-      # Assuming default Substrate metrics port is 9615
       - targets: ['host.docker.internal:9615']
+
+  - job_name: 'cardano_node'
+    static_configs:
+      # Default Cardano Node EKG/Prometheus metrics port is usually 12798
+      - targets: ['host.docker.internal:12798']

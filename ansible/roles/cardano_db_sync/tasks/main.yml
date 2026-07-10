@@ -1,0 +1,84 @@
+---
+- name: Download Cardano DB Sync release
+  become: yes
+  become_user: "{{ node_user }}"
+  get_url:
+    url: "https://github.com/IntersectMBO/cardano-db-sync/releases/download/13.6.0.4/cardano-db-sync-13.6.0.4-linux-x86_64.tar.gz"
+    dest: "{{ node_home }}/tmp/cardano-db-sync.tar.gz"
+
+- name: Extract Cardano DB Sync
+  become: yes
+  become_user: "{{ node_user }}"
+  unarchive:
+    src: "{{ node_home }}/tmp/cardano-db-sync.tar.gz"
+    dest: "{{ node_home }}/.local/bin"
+    extra_opts:
+      - --strip-components=1
+    remote_src: yes
+
+- name: Ensure cardano-db-sync is executable
+  become: yes
+  become_user: "{{ node_user }}"
+  file:
+    path: "{{ node_home }}/.local/bin/cardano-db-sync"
+    mode: '0755'
+
+- name: Create DB Sync state and schema directories
+  become: yes
+  become_user: "{{ node_user }}"
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - "{{ node_home }}/cardano-data/db-sync-state"
+    - "{{ node_home }}/cardano-data/schema"
+
+- name: Download Preprod DB Sync Config
+  become: yes
+  become_user: "{{ node_user }}"
+  get_url:
+    url: "https://book.world.dev.cardano.org/environments/preprod/db-sync-config.json"
+    dest: "{{ node_home }}/cardano-data/db-sync-config.json"
+
+- name: Update NodeConfigFile path in db-sync-config.json
+  become: yes
+  become_user: "{{ node_user }}"
+  replace:
+    path: "{{ node_home }}/cardano-data/db-sync-config.json"
+    regexp: '"NodeConfigFile": ".*"'
+    replace: '"NodeConfigFile": "{{ node_home }}/.local/share/preprod/config.json"'
+
+- name: Create src temp directory
+  become: yes
+  become_user: "{{ node_user }}"
+  file:
+    path: "{{ node_home }}/tmp/cardano-db-sync-src"
+    state: directory
+
+- name: Extract Schema files from source repository
+  become: yes
+  become_user: "{{ node_user }}"
+  unarchive:
+    src: "https://github.com/IntersectMBO/cardano-db-sync/archive/refs/tags/13.6.0.4.tar.gz"
+    dest: "{{ node_home }}/tmp/cardano-db-sync-src"
+    remote_src: yes
+  ignore_errors: true
+
+- name: Copy schema to target directory
+  become: yes
+  become_user: "{{ node_user }}"
+  command: "cp -r {{ node_home }}/tmp/cardano-db-sync-src/cardano-db-sync-13.6.0.4/schema/. {{ node_home }}/cardano-data/schema/"
+  args:
+    creates: "{{ node_home }}/cardano-data/schema/migration-1-0000-20190730.sql"
+
+- name: Template Cardano DB Sync systemd service
+  template:
+    src: cardano-db-sync.service.j2
+    dest: /etc/systemd/system/cardano-db-sync.service
+
+- name: Enable Cardano DB Sync service
+  systemd:
+    name: cardano-db-sync
+    enabled: yes
+    daemon_reload: yes

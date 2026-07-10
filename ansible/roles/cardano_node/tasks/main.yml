@@ -100,6 +100,13 @@
     src: cardano-node.service.j2
     dest: /etc/systemd/system/cardano-node.service
 
+- name: Enable Cardano Node service
+  systemd:
+    name: cardano-node
+    enabled: yes
+    daemon_reload: yes
+    dest: /etc/systemd/system/cardano-node.service
+
 - name: Start and enable Cardano Node
   systemd:
     name: cardano-node
