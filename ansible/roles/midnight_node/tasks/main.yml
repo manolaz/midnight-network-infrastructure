@@ -34,7 +34,7 @@
 - name: Move Midnight res directory
   command: mv {{ node_home }}/tmp/res {{ node_home }}/
   args:
-    creates: "{{ node_home }}/res/preprod"
+    creates: "{{ node_home }}/res/{{ network }}"
 
 - name: Ensure midnight-node is executable
   file:

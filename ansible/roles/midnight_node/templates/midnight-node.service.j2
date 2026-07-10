@@ -9,7 +9,7 @@ Type=simple
 EnvironmentFile={{ node_home }}/.env
 WorkingDirectory={{ node_home }}/data
 ExecStart={{ node_home }}/.local/bin/midnight-node \
-    --chain {{ node_home }}/res/preprod/chain-spec-raw.json \
+    --chain {{ node_home }}/res/{{ network }}/chain-spec-raw.json \
     --base-path {{ node_home }}/data \
     --name {{ midnight_node_name }} \
     --pruning archive \
@@ -21,7 +21,7 @@ ExecStart={{ node_home }}/.local/bin/midnight-node \
 {% endif %}
 {% if is_boot_node | default(false) %}
     --listen-addr /ip4/0.0.0.0/tcp/30333 \
-    --bootnodes /dns/bootnode-1.preprod.midnight.network/tcp/30333/ws/p2p/12D3KooWK66i7dtGVNSwDh9tTeqov1q6LSdWsRLJvTyzTCaywYgK \
+    --bootnodes /dns/{{ midnight_bootnode }}/tcp/30333/ws/p2p/12D3KooWK66i7dtGVNSwDh9tTeqov1q6LSdWsRLJvTyzTCaywYgK \
 {% endif %}
     --no-private-ip
 KillSignal=SIGINT

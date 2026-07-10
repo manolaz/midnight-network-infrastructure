@@ -34,11 +34,11 @@
     - "{{ node_home }}/cardano-data/db-sync-state"
     - "{{ node_home }}/cardano-data/schema"
 
-- name: Download Preprod DB Sync Config
+- name: Download DB Sync Config for Network
   become: yes
   become_user: "{{ node_user }}"
   get_url:
-    url: "https://book.world.dev.cardano.org/environments/preprod/db-sync-config.json"
+    url: "https://book.world.dev.cardano.org/environments/{{ cardano_network }}/db-sync-config.json"
     dest: "{{ node_home }}/cardano-data/db-sync-config.json"
 
 - name: Update NodeConfigFile path in db-sync-config.json
@@ -47,7 +47,7 @@
   replace:
     path: "{{ node_home }}/cardano-data/db-sync-config.json"
     regexp: '"NodeConfigFile": ".*"'
-    replace: '"NodeConfigFile": "{{ node_home }}/.local/share/preprod/config.json"'
+    replace: '"NodeConfigFile": "{{ node_home }}/.local/share/{{ cardano_network }}/config.json"'
 
 - name: Create src temp directory
   become: yes

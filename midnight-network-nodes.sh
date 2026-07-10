@@ -5,10 +5,14 @@
 #              (Preview/Preprod/Mainnet). Enables keeping historical states to 
 #              track transactions and enables RPC options for indexers/explorers.
 #              This complements the instructions in RUNBOOK.md.
-# Usage: sudo ./install_midnight_archive_node.sh
+# Usage: sudo ./install_midnight_archive_node.sh [NETWORK]
 # ==============================================================================
 
 set -e
+
+# Support overriding the network via argument (preview, preprod, mainnet)
+TARGET_NETWORK=${1:-preprod}
+echo "[*] Target Network: $TARGET_NETWORK"
 
 if [ "$EUID" -eq 0 ]; then
   echo "[*] Running as root (e.g., GCP Startup Script). Setting up 'midnight' user..."
@@ -42,63 +46,12 @@ if [ ! -f "ansible/setup_node.yml" ]; then
     exit 1
 fi
 
-ansible-playbook -i localhost, -c local ansible/setup_node.yml
+ansible-playbook -i localhost, -c local ansible/setup_node.yml --extra-vars "network=$TARGET_NETWORK"
 
-echo "[*] Node setup complete. Check the status of the following services:"
+echo "========================================================================"
+echo "[+] Node setup complete. Check the status of the following services:"
 echo "    - sudo systemctl status postgresql"
 echo "    - sudo systemctl status cardano-node"
 echo "    - sudo systemctl status cardano-db-sync"
 echo "    - sudo systemctl status midnight-node"
-
-export POSTGRES_DB="cexplorer"
-export POSTGRES_PORT="5432"
-export POSTGRES_USER="midnight"
-export POSTGRES_PASSWORD="YOUR_POSTGRES_PASSWORD"
-export DB_SYNC_POSTGRES_CONNECTION_STRING="postgresql://midnight:YOUR_POSTGRES_PASSWORD@localhost:5432/cexplorer"
-export NODE_NAME="midnight-archive-node"
-ENV
-
-echo "[*] Step 6: Creating Midnight Node systemd service (ARCHIVE MODE)..."
-sudo tee /etc/systemd/system/midnight-node.service > /dev/null <<SERVICE
-[Unit]
-Description=Midnight Archive Node
-Wants=network-online.target
-After=network-online.target cardano-node.service
-
-[Service]
-User=$NODE_USER
-Type=simple
-EnvironmentFile=$USER_HOME/.env
-WorkingDirectory=$USER_HOME/data
-# Run in Archive mode to track all testnet transactions
-ExecStart=$USER_HOME/.local/bin/midnight-node \
-    --chain $USER_HOME/res/preprod/chain-spec-raw.json \
-    --base-path $USER_HOME/data \
-    --name \${NODE_NAME} \
-    --pruning archive \
-    --rpc-external \
-    --rpc-cors all \
-    --no-private-ip
-KillSignal=SIGINT
-Restart=always
-RestartSec=10
-LimitNOFILE=32768
-
-[Install]
-WantedBy=multi-user.target
-SERVICE
-
-sudo systemctl daemon-reload
-
-# Fix permissions if script was run as root
-if [ "$EUID" -eq 0 ]; then
-  echo "[*] Fixing permissions for $USER_HOME..."
-  chown -R $NODE_USER:$NODE_USER $USER_HOME
-fi
-
-echo "========================================================================"
-echo "[+] Setup automation completed."
-echo "[!] IMPORTANT: You must configure PostgreSQL and run cardano-db-sync"
-echo "    until fully synced (~6 hours) BEFORE starting midnight-node!"
-echo "    Once ready, run: sudo systemctl start midnight-node"
 echo "========================================================================"
