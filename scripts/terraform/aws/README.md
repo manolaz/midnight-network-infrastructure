@@ -8,7 +8,7 @@ The Terraform code will automatically:
 1.  Configure the required AWS Provider.
 2.  Set up a Security Group in the default VPC (or a specified VPC) to allow necessary ingress (P2P ports 30333/3001) and SSH access.
 3.  Provision an IAM Role with SSM access.
-4.  Launch a `t3.xlarge` (Ubuntu 22.04) EC2 instance with a 500GB gp3 EBS volume.
+4.  Launch a `t3.xlarge` (Ubuntu 24.04) EC2 instance with a 500GB gp3 EBS volume.
 5.  Inject the `install_midnight_archive_node.sh` as an EC2 `user_data` script to fully bootstrap the node automatically on boot.
 
 ## Prerequisites

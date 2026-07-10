@@ -3,7 +3,7 @@
 ## Section 1: FNO (Full Node Operator) Onboarding Steps
 
 ### Prerequisites
-- Access to a Linux-based server (x86-64/amd64 architecture, Ubuntu 22.04 LTS).
+- Access to a Linux-based server (x86-64/amd64 architecture, Ubuntu 24.04 LTS).
 - Sufficient resources (CPU, memory, and storage) for both Cardano and Midnight nodes.
 - SSH access with sudo privileges.
 - Firewall configured to allow required ports:

@@ -6,7 +6,7 @@
 
 ## 📑 Executive Summary
 
-This repository encapsulates the deployment scripts, operational runbooks, observability stack, and Day-2 automation tooling required to securely operate a **Full Node Operator (FNO)** on the Midnight Networks (Preview, Pre-Production, and Mainnet). 
+This repository encapsulates the deployment scripts, operational runbooks, observability stack, and Day-2 automation tooling required to securely operate a **Full Node Operator (FNO)** on the Midnight Networks (Preview, Pre-Production, and Mainnet).
 
 Designed with production-grade engineering principles, this setup explicitly handles Midnight's architecture as a Cardano Partner Chain. It systematically orchestrates the critical dependencies—Mithril snapshotting, Cardano Relay sync, and PostgreSQL database initialization via `cardano-db-sync`—before bootstrapping the Midnight Substrate runtime.
 
@@ -100,7 +100,8 @@ Depending on your chosen deployment method, ensure you have the following tools 
 ## 🚀 Deployment Operations
 
 ### Option 1A: Infrastructure as Code (Terraform on GCP)
-For frictionless, reproducible infrastructure, Terraform is used to provision the network, IAM roles, firewall rules, and an `e2-standard-4` (Ubuntu 22.04, 500GB SSD) compute instance on Google Cloud. 
+
+For frictionless, reproducible infrastructure, Terraform is used to provision the network, IAM roles, firewall rules, and an `e2-standard-4` (Ubuntu 24.04, 500GB SSD) compute instance on Google Cloud.
 
 ```bash
 # Authenticate with Google Cloud
@@ -111,9 +112,11 @@ cd scripts/terraform/gcp
 terraform init
 terraform apply -var="project_id=[YOUR_PROJECT_ID]" -var="target_network=preprod"
 ```
+
 *The VM will boot and immediately execute `install_midnight_archive_node.sh` via cloud-init, safely configuring the `midnight` user environment and pulling the Mithril snapshots.*
 
 ### Option 1B: Infrastructure as Code (Terraform on AWS)
+
 Alternatively, you can provision an equivalent node (`t3.xlarge` with 500GB gp3 storage) on Amazon Web Services.
 
 ```bash
@@ -125,9 +128,11 @@ cd scripts/terraform/aws
 terraform init
 terraform apply -var="key_name=[YOUR_AWS_KEY_PAIR]" -var="target_network=preprod"
 ```
+
 *The EC2 instance will boot and execute the installation script via `user_data`.*
 
 ### Option 2: Configuration Management (Ansible)
+
 For on-premise environments, bare-metal clusters, or existing VMs, the entire node setup has been codified into modular Ansible playbooks. This ensures fine-grained idempotency.
 
 ```bash
@@ -135,9 +140,11 @@ For on-premise environments, bare-metal clusters, or existing VMs, the entire no
 # Provide the target network via extra-vars: 'preview', 'preprod', or 'mainnet'
 ansible-playbook -i scripts/ansible/inventory/hosts.ini scripts/ansible/setup_node.yml --extra-vars "network=preprod"
 ```
+
 *The playbook cleanly separates roles (`common`, `postgres`, `cardano_node`, `midnight_node`) so you can run, test, or re-run specific components without state drift.*
 
 ### Option 3: Manual / On-Premise Setup
+
 For a step-by-step educational guide on bootstrapping the Cardano dependencies and the Midnight node manually, refer to **[`RUNBOOK.md`](./RUNBOOK.md)**.
 
 ---
@@ -147,7 +154,9 @@ For a step-by-step educational guide on bootstrapping the Cardano dependencies a
 Robust visibility into the node's state is non-negotiable for an FNO. The `monitoring/` directory contains a lightweight, containerized telemetry stack.
 
 ### Alerting Rationale (`node_alerts.yml`)
+
 Alerts are designed with a high signal-to-noise ratio to prevent alert fatigue:
+
 1. **`BlockProductionStalled` (Critical):** Triggers if `substrate_block_height` remains static for 5 minutes. *Action: Investigate DB Sync connection or restart node service.*
 2. **`LowPeerCount` (Warning):** Triggers if `libp2p_peers_count` falls below 5. Substrate consensus degrades rapidly without adequate peer propagation. *Action: Validate port 30333 reachability and bootnode health.*
 3. **`HighCpuUsage` (Warning):** Triggers if CPU sustains >85% for 10 minutes. *Action: Check for RPC spam or prepare to vertically scale compute.*
@@ -166,15 +175,15 @@ Please see our [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on how
 
 Operational scripts (located in `scripts/`) are built with idempotency and structured output (JSON) in mind, allowing them to be seamlessly integrated into CI/CD pipelines or cron jobs.
 
-*   **`health_check.sh`**: Polls the local `system_health` RPC endpoint, evaluates peer counts/sync status, and diffs the output against previous runs to detect silent regressions.
-*   **`key_collection.sh`**: Iterates through a mock directory of FNOs to request public keys, saving state efficiently so subsequent runs only target non-responsive operators.
-*   **`maintenance_notify.sh`**: Simulates sending structured maintenance window alerts, tracks asynchronous acknowledgments, and flags operators who exceed the SLA timeout.
+* **`health_check.sh`**: Polls the local `system_health` RPC endpoint, evaluates peer counts/sync status, and diffs the output against previous runs to detect silent regressions.
+* **`key_collection.sh`**: Iterates through a mock directory of FNOs to request public keys, saving state efficiently so subsequent runs only target non-responsive operators.
+* **`maintenance_notify.sh`**: Simulates sending structured maintenance window alerts, tracks asynchronous acknowledgments, and flags operators who exceed the SLA timeout.
 
 ---
 
 ## 🔒 Security Posture
 
-Operational security, specifically regarding the generation, storage, and rotation of Validator Session Keys, is detailed in **[`SECURITY.md`](./SECURITY.md)**. 
+Operational security, specifically regarding the generation, storage, and rotation of Validator Session Keys, is detailed in **[`SECURITY.md`](./SECURITY.md)**.
 It covers cloud-native storage (KMS/Secrets Manager), HSM integration tradeoffs, and a strict 3-step Incident Response protocol for compromised credentials.
 
 ---
@@ -183,6 +192,6 @@ It covers cloud-native storage (KMS/Secrets Manager), HSM integration tradeoffs,
 
 As a senior engineering implementation, it is important to document assumptions and areas slated for future iteration:
 
-*   **Assumption - Ports:** We assume Prometheus exporter default ports (`9615` for Substrate) remain unmodified.
-*   **Assumption - Env:** Designed for Debian/Ubuntu (apt-based) environments.
-*   **IaC Integration:** The deployment infrastructure has been transitioned from bash to **Terraform** (`scripts/terraform`) to rigorously manage state, VPCs, and IAM roles.
+* **Assumption - Ports:** We assume Prometheus exporter default ports (`9615` for Substrate) remain unmodified.
+* **Assumption - Env:** Designed for Debian/Ubuntu (apt-based) environments.
+* **IaC Integration:** The deployment infrastructure has been transitioned from bash to **Terraform** (`scripts/terraform`) to rigorously manage state, VPCs, and IAM roles.

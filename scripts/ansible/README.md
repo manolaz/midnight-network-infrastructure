@@ -15,7 +15,7 @@ The automation is split into distinct, modular roles to ensure clean separation 
 ## Prerequisites
 
 - [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html) (>= 2.14).
-- Target hosts must be running a compatible Debian-based OS (Ubuntu 22.04 recommended).
+- Target hosts must be running a compatible Debian-based OS (Ubuntu 24.04 recommended).
 - SSH access to the target hosts with `sudo` privileges.
 
 ## Configuration

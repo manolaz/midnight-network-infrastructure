@@ -9,7 +9,7 @@ The Terraform code will automatically:
 2.  Set up a VPC and subnet for the node (if applicable).
 3.  Configure Firewall rules to allow necessary ingress (P2P ports) and SSH access.
 4.  Provision a dedicated Service Account.
-5.  Launch an `e2-standard-4` (Ubuntu 22.04) Compute Engine instance.
+5.  Launch an `e2-standard-4` (Ubuntu 24.04) Compute Engine instance.
 6.  Inject the `install_midnight_archive_node.sh` as a `cloud-init` startup script to fully bootstrap the node automatically on boot.
 
 ## Prerequisites
