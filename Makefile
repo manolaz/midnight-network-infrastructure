@@ -25,4 +25,4 @@ lint:
 	@echo "[*] Running ShellCheck..."
 	shellcheck scripts/*.sh
 	@echo "[*] Running Ansible Lint..."
-	ansible-lint ansible/setup_node.yml
+	ansible-lint scripts/ansible/setup_node.yml

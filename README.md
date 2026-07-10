@@ -27,16 +27,6 @@ Designed with production-grade engineering principles, this setup explicitly han
 ├── README.md                           # Documentation entrypoint (this file)
 ├── RUNBOOK.md                          # Step-by-step manual FNO onboarding & recovery procedures
 ├── SECURITY.md                         # Threat modeling, key management & incident response protocols
-├── ansible/                            # Infrastructure as Code (Ansible Playbooks)
-│   ├── inventory/
-│   │   └── hosts.ini
-│   ├── setup_node.yml                  # Main playbook
-│   └── roles/
-│       ├── common/                     # Base dependencies and user management
-│       ├── postgres/                   # PostgreSQL 17 configuration & tuning
-│       ├── cardano_node/               # Mithril snapshot and Cardano relay config
-│       ├── cardano_db_sync/            # Cardano DB Sync daemon integration
-│       └── midnight_node/              # Substrate node and archive mode setup
 ├── monitoring/
 │   ├── configs/
 │   │   ├── docker-compose.yml          # Containerized telemetry stack (Prometheus + Grafana)
@@ -44,7 +34,24 @@ Designed with production-grade engineering principles, this setup explicitly han
 │   └── alerts/
 │       └── node_alerts.yml             # Critical alerting thresholds (Block stalling, CPU, Peers)
 └── scripts/
-    ├── gcp_deploy.sh                   # GCP VM provisioning & firewall automation
+    ├── ansible/                        # Infrastructure as Code (Ansible Playbooks)
+    │   ├── inventory/
+    │   │   └── hosts.ini
+    │   ├── setup_node.yml              # Main playbook
+    │   └── roles/
+    │       ├── common/                 # Base dependencies and user management
+    │       ├── postgres/               # PostgreSQL 17 configuration & tuning
+    │       ├── cardano_node/           # Mithril snapshot and Cardano relay config
+    │       ├── cardano_db_sync/        # Cardano DB Sync daemon integration
+    │       └── midnight_node/          # Substrate node and archive mode setup
+    ├── terraform/                      # Infrastructure as Code (Terraform)
+    │   ├── main.tf                     # Provider and backend configuration
+    │   ├── variables.tf                # Input variables
+    │   ├── network.tf                  # VPC, subnets, and firewall rules
+    │   ├── iam.tf                      # Service accounts and IAM roles
+    │   ├── compute.tf                  # Compute instance configuration
+    │   └── outputs.tf                  # Outputs (IPs, SSH commands)
+    ├── gcp_deploy.sh                   # (DEPRECATED) GCP VM provisioning automation
     ├── install_midnight_archive_node.sh # Cloud-Init target: Zero-touch node setup
     ├── health_check.sh                 # Day-2: RPC-based health & regression monitoring (Option C)
     ├── key_collection.sh               # Day-2: Idempotent FNO public key collector (Option A)
@@ -73,7 +80,7 @@ For on-premise environments, bare-metal clusters, or existing VMs, the entire no
 ```bash
 # Run the setup playbook locally (or against remote hosts via inventory)
 # Provide the target network via extra-vars: 'preview', 'preprod', or 'mainnet'
-ansible-playbook -i ansible/inventory/hosts.ini ansible/setup_node.yml --extra-vars "network=preprod"
+ansible-playbook -i scripts/ansible/inventory/hosts.ini scripts/ansible/setup_node.yml --extra-vars "network=preprod"
 ```
 *The playbook cleanly separates roles (`common`, `postgres`, `cardano_node`, `midnight_node`) so you can run, test, or re-run specific components without state drift.*
 
@@ -125,4 +132,4 @@ As a senior engineering implementation, it is important to document assumptions 
 
 *   **Assumption - Ports:** We assume Prometheus exporter default ports (`9615` for Substrate) remain unmodified.
 *   **Assumption - Env:** Designed for Debian/Ubuntu (apt-based) environments.
-*   **Future Work - Full IaC:** Transition the bash-based `gcp_deploy.sh` to **Terraform** to manage state, VPCs, and IAM roles more robustly.
+*   **IaC Integration:** The deployment infrastructure has been transitioned from bash to **Terraform** (`scripts/terraform`) to rigorously manage state, VPCs, and IAM roles.

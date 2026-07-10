@@ -41,12 +41,12 @@ echo "[*] Step 2: Running Ansible Playbook for Full Node Provisioning..."
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_DIR"
 
-if [ ! -f "ansible/setup_node.yml" ]; then
-    echo "[!] Error: Cannot find ansible/setup_node.yml. Ensure you are running this from the repository root."
+if [ ! -f "scripts/ansible/setup_node.yml" ]; then
+    echo "[!] Error: Cannot find scripts/ansible/setup_node.yml. Ensure you are running this from the repository root."
     exit 1
 fi
 
-ansible-playbook -i localhost, -c local ansible/setup_node.yml --extra-vars "network=$TARGET_NETWORK"
+ansible-playbook -i localhost, -c local scripts/ansible/setup_node.yml --extra-vars "network=$TARGET_NETWORK"
 
 echo "========================================================================"
 echo "    - sudo systemctl status postgresql"

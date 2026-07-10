@@ -21,7 +21,7 @@
 
 ### Manual Setup (For Reference / Troubleshooting)
 
-The underlying Ansible playbooks (`ansible/setup_node.yml`) orchestrate the following:
+The underlying Ansible playbooks (`scripts/ansible/setup_node.yml`) orchestrate the following:
 
 1. **PostgreSQL 17 Setup:** Installs PostgreSQL from the official APT repository, creates a `midnight` user, `cexplorer` database, tunes indexing params, and drops `.pgpass`.
 2. **Cardano Relay Node & Mithril:** Downloads Mithril, syncs the latest environment snapshot, downloads the `cardano-node` release, and templates `cardano-node.service`.
@@ -31,7 +31,7 @@ The underlying Ansible playbooks (`ansible/setup_node.yml`) orchestrate the foll
 To invoke this manually without the wrapper script:
 ```bash
 sudo apt-get install -y ansible
-ansible-playbook -i localhost, -c local ansible/setup_node.yml --extra-vars "network=preprod"
+ansible-playbook -i localhost, -c local scripts/ansible/setup_node.yml --extra-vars "network=preprod"
 ```
 
 2. **Start Cardano DB Sync:**
