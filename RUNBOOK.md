@@ -14,8 +14,8 @@
 
 > **⚠️ CRITICAL PREREQUISITE:** Cardano DB Sync is a hard prerequisite for the Midnight node stack. The Midnight node requires a persistent connection to a PostgreSQL 17 database populated by Cardano-db-sync. Syncing takes a minimum of 6 hours against pre-prod. **Do not attempt to run the Midnight node until DB Sync is fully completed.**
 
-> **🚀 AUTOMATED SETUP (Recommended):** A fully reproducible cloud-init compatible shell script is available at `scripts/install_midnight_archive_node.sh`. It automatically invokes Ansible to configure the entire stack for Preview, Preprod, or Mainnet.
-> Usage: `sudo ./scripts/install_midnight_archive_node.sh [NETWORK]`
+> **🚀 AUTOMATED SETUP (Recommended):** Fully reproducible cloud-init compatible shell scripts are available at `scripts/install_midnight_archive_node.sh` and `scripts/install_midnight_full_node.sh`. They automatically invoke Ansible to configure the entire stack for Preview, Preprod, or Mainnet.
+> Usage: `sudo ./scripts/install_midnight_full_node.sh [NETWORK]` OR `sudo ./scripts/install_midnight_archive_node.sh [NETWORK]`
 
 ---
 
@@ -26,9 +26,15 @@ The underlying Ansible playbooks (`scripts/ansible/setup_node.yml`) orchestrate 
 1. **PostgreSQL 17 Setup:** Installs PostgreSQL from the official APT repository, creates a `midnight` user, `cexplorer` database, tunes indexing params, and drops `.pgpass`.
 2. **Cardano Relay Node & Mithril:** Downloads Mithril, syncs the latest environment snapshot, downloads the `cardano-node` release, and templates `cardano-node.service`.
 3. **Cardano DB Sync:** Downloads the db-sync release, downloads the network-specific JSON configuration, extracts the SQL schemas, and templates `cardano-db-sync.service`.
-4. **Midnight Node:** Downloads the Midnight binary, provisions network specs, templates `midnight-node.service` with conditional flags for RPC, Bootnode, and Archive pruning.
+4. **Midnight Node:** Downloads the Midnight binary, provisions network specs, templates `midnight-node.service` with conditional flags for RPC, Bootnode, Full node, and Archive pruning.
 
-To invoke this manually without the wrapper script:
+To invoke this manually without the wrapper script for a full node:
+```bash
+sudo apt-get install -y ansible
+ansible-playbook -i localhost, -c local scripts/ansible/setup_full_node.yml --extra-vars "network=preprod"
+```
+
+To invoke this manually for an archive node:
 ```bash
 sudo apt-get install -y ansible
 ansible-playbook -i localhost, -c local scripts/ansible/setup_node.yml --extra-vars "network=preprod"
@@ -68,7 +74,20 @@ ansible-playbook -i localhost, -c local scripts/ansible/setup_node.yml --extra-v
    source ~/.env
    ```
 
-3. **Start Midnight Node (Archive Mode):**
+3. **Start Midnight Node:**
+   
+   **For a Full Node:**
+   A full node syncs with the blockchain, validates transactions, and provides real-time state queries. It prunes historical states older than 256 blocks, keeping disk usage low.
+   ```bash
+   midnight-node \
+     --chain /home/$USER/res/preprod/chain-spec-raw.json \
+     --base-path /home/$USER/data \
+     --name $NODE_NAME \
+     --pool-limit 35 \
+     --no-private-ip
+   ```
+
+   **For an Archive Node:**
    To track all historical testnet transactions and enable querying by local indexers, run the node in `archive` mode and expose the RPC.
    ```bash
    midnight-node \

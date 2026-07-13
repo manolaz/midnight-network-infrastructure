@@ -40,8 +40,14 @@ The database password defaults to `YOUR_POSTGRES_PASSWORD` in `setup_node.yml`. 
 
 ## Usage
 
-Run the main setup playbook, specifying the target environment via `extra-vars`:
+Run the main setup playbook, specifying the target environment via `extra-vars`. 
 
+**For a Full Node:**
+```bash
+ansible-playbook -i inventory/hosts.ini setup_full_node.yml --extra-vars "network=preprod"
+```
+
+**For an Archive Node:**
 ```bash
 # To provision a Pre-Production node:
 ansible-playbook -i inventory/hosts.ini setup_node.yml --extra-vars "network=preprod"

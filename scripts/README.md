@@ -15,9 +15,19 @@ This directory contains automated scripts and Ansible playbooks to set up Cardan
      - Installs `cardano-db-sync` and configures it to run as a systemd service connecting to the local `cardano-node`.
    - **Usage:** `./install_cardano_preprod.sh`
 
-### Midnight Validator Setup
+### Midnight Validator & Node Setup
 
-2. **`install_midnight_validator.sh`**
+2. **`install_midnight_archive_node.sh`**
+   - **Purpose:** Automates the setup of an Archive Node for the Midnight networks.
+   - **Actions:** Uses Ansible (`setup_node.yml`) to provision the entire stack, running the Midnight node with `--pruning archive` to keep historical states and exposing RPC.
+   - **Usage:** `sudo ./install_midnight_archive_node.sh [NETWORK]`
+
+3. **`install_midnight_full_node.sh`**
+   - **Purpose:** Automates the setup of a Full Node for the Midnight networks.
+   - **Actions:** Uses Ansible (`setup_full_node.yml`) to provision the entire stack, running the Midnight node efficiently without archive pruning (using `--pool-limit 35`) and without public RPC, suitable for validation and DApp development.
+   - **Usage:** `sudo ./install_midnight_full_node.sh [NETWORK]`
+
+4. **`install_midnight_validator.sh`**
    - **Purpose:** Automates the initial setup and key generation for a Midnight Validator Node.
    - **Actions:**
      - Downloads and installs the `midnight-node` binary (v0.22.2).
@@ -27,7 +37,7 @@ This directory contains automated scripts and Ansible playbooks to set up Cardan
      - Generates the `partner-chains-public-keys.json` file required for FNO registration.
    - **Usage:** `./install_midnight_validator.sh [NETWORK]` (Defaults to `preprod`)
 
-3. **`configure_midnight_validator.sh`**
+5. **`configure_midnight_validator.sh`**
    - **Purpose:** Configures the environment and systemd service for running the Midnight node in Validator mode.
    - **Actions:**
      - Interactively prompts for the PostgreSQL password (or reads from `$POSTGRES_PASSWORD`).
@@ -40,29 +50,29 @@ This directory contains automated scripts and Ansible playbooks to set up Cardan
 
 These scripts safely backup your generated validator keys to enterprise secret managers.
 
-4. **`store_keys_aws.sh`**
+6. **`store_keys_aws.sh`**
    - **Purpose:** Uploads the node's session and network keys to AWS Secrets Manager.
    - **Requires:** `aws-cli` configured. Uses `$AWS_REGION` (defaults to `us-east-1`).
    - **Usage:** `./store_keys_aws.sh [NETWORK]`
 
-5. **`store_keys_gcp.sh`**
+7. **`store_keys_gcp.sh`**
    - **Purpose:** Uploads keys to Google Cloud Secret Manager.
    - **Requires:** `$GOOGLE_CLOUD_PROJECT` environment variable and authenticated `gcloud` CLI.
    - **Usage:** `./store_keys_gcp.sh [NETWORK]`
 
-6. **`store_keys_vault.sh`**
+8. **`store_keys_vault.sh`**
    - **Purpose:** Uploads keys to HashiCorp Vault.
    - **Requires:** `vault` CLI. Uses `$VAULT_ADDR` (defaults to local).
    - **Usage:** `./store_keys_vault.sh [NETWORK]`
 
 ### Secure Networking (WireGuard)
 
-7. **`install_wireguard.sh`**
+9. **`install_wireguard.sh`**
    - **Purpose:** Compiles WireGuard tools from source to meet Midnight's exact version requirements.
    - **Actions:** Installs `v1.0.20250521` and generates the Tunnel Identity Keypair (`privatekey`, `publickey`).
    - **Usage:** `./install_wireguard.sh`
 
-8. **`configure_wireguard.sh`**
+10. **`configure_wireguard.sh`**
    - **Purpose:** Sets up the WireGuard tunnel interface once the foundation provides overlay assignments.
    - **Actions:** Prompts for assigned IP and peer variables, creates `/etc/wireguard/wg0.conf`, and enables the `wg-quick@wg0` service.
    - **Usage:** `sudo ./configure_wireguard.sh`
