@@ -43,8 +43,14 @@ graph TD
 ```text
 .
 ├── README.md                           # Documentation entrypoint (this file)
-├── RUNBOOK.md                          # Step-by-step manual FNO onboarding & recovery procedures
-├── SECURITY.md                         # Threat modeling, key management & incident response protocols
+├── docs/                               # Comprehensive documentation
+│   ├── architecture/                   # Architecture and design notes
+│   ├── development/
+│   │   └── CONTRIBUTING.md             # Contribution guidelines
+│   ├── operations/
+│   │   └── RUNBOOK.md                  # Step-by-step manual FNO onboarding
+│   └── security/
+│       └── SECURITY.md                 # Threat modeling, key management
 ├── monitoring/
 │   ├── configs/
 │   │   ├── docker-compose.yml          # Containerized telemetry stack (Prometheus + Grafana)
@@ -145,7 +151,7 @@ ansible-playbook -i scripts/ansible/inventory/hosts.ini scripts/ansible/setup_no
 
 ### Option 3: Manual / On-Premise Setup
 
-For a step-by-step educational guide on bootstrapping the Cardano dependencies and the Midnight node manually, refer to **[`RUNBOOK.md`](./RUNBOOK.md)**.
+For a step-by-step educational guide on bootstrapping the Cardano dependencies and the Midnight node manually, refer to **[`docs/operations/RUNBOOK.md`](./docs/operations/RUNBOOK.md)**.
 
 ---
 
@@ -167,11 +173,11 @@ Alerts are designed with a high signal-to-noise ratio to prevent alert fatigue:
 
 We welcome contributions from the open-source community! Whether it's adding support for AWS/Azure, improving monitoring dashboards, or fixing typos.
 
-Please see our [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on how to submit pull requests, run the linters, and utilize the included `Makefile`. We enforce a strict [Code of Conduct](CODE_OF_CONDUCT.md).
+Please see our [CONTRIBUTING.md](docs/development/CONTRIBUTING.md) for detailed guidelines on how to submit pull requests, run the linters, and utilize the included `Makefile`. We enforce a strict [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ---
 
-## 🛠 Day-2 Automation Tools
+## 🛠 Automation Tools
 
 Operational scripts (located in `scripts/`) are built with idempotency and structured output (JSON) in mind, allowing them to be seamlessly integrated into CI/CD pipelines or cron jobs.
 
@@ -183,7 +189,7 @@ Operational scripts (located in `scripts/`) are built with idempotency and struc
 
 ## 🔒 Security Posture
 
-Operational security, specifically regarding the generation, storage, and rotation of Validator Session Keys, is detailed in **[`SECURITY.md`](./SECURITY.md)**.
+Operational security, specifically regarding the generation, storage, and rotation of Validator Session Keys, is detailed in **[`docs/security/SECURITY.md`](./docs/security/SECURITY.md)**.
 It covers cloud-native storage (KMS/Secrets Manager), HSM integration tradeoffs, and a strict 3-step Incident Response protocol for compromised credentials.
 
 ---

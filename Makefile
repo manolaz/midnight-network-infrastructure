@@ -9,9 +9,9 @@ help:
 	@echo "  make lint                      - Run ShellCheck and Ansible Lint (requires local tooling)"
 	@echo "  make setup-deps                - Install local development dependencies (Ubuntu/Debian)"
 	@echo "  make pre-commit                - Run pre-commit hooks on all files"
-	@echo "  make tf-init                   - Initialize Terraform"
-	@echo "  make tf-plan                   - Plan Terraform deployment"
-	@echo "  make tf-apply                  - Apply Terraform deployment"
+	@echo "  make tf-init [cloud=aws|gcp]   - Initialize Terraform (default: gcp)"
+	@echo "  make tf-plan [cloud=aws|gcp]   - Plan Terraform deployment"
+	@echo "  make tf-apply [cloud=aws|gcp]  - Apply Terraform deployment"
 
 setup-deps:
 	sudo apt-get update
@@ -37,11 +37,13 @@ lint:
 pre-commit:
 	pre-commit run --all-files
 
+cloud ?= gcp
+
 tf-init:
-	cd scripts/terraform && terraform init
+	cd scripts/terraform/$(cloud) && terraform init
 
 tf-plan:
-	cd scripts/terraform && terraform plan
+	cd scripts/terraform/$(cloud) && terraform plan
 
 tf-apply:
-	cd scripts/terraform && terraform apply
+	cd scripts/terraform/$(cloud) && terraform apply

@@ -19,16 +19,20 @@
 
 ---
 
-### Manual Setup (For Reference / Troubleshooting)
+### Manual Components Breakdown (For Reference / Troubleshooting)
 
-The underlying Ansible playbooks (`scripts/ansible/setup_node.yml`) orchestrate the following:
+The underlying Ansible playbooks (`scripts/ansible/setup_node.yml`) orchestrate the following components:
 
 1. **PostgreSQL 17 Setup:** Installs PostgreSQL from the official APT repository, creates a `midnight` user, `cexplorer` database, tunes indexing params, and drops `.pgpass`.
 2. **Cardano Relay Node & Mithril:** Downloads Mithril, syncs the latest environment snapshot, downloads the `cardano-node` release, and templates `cardano-node.service`.
 3. **Cardano DB Sync:** Downloads the db-sync release, downloads the network-specific JSON configuration, extracts the SQL schemas, and templates `cardano-db-sync.service`.
 4. **Midnight Node:** Downloads the Midnight binary, provisions network specs, templates `midnight-node.service` with conditional flags for RPC, Bootnode, Full node, and Archive pruning.
 
-To invoke this manually without the wrapper script for a full node:
+---
+
+### Step 1: Ansible Automation Execution
+
+To invoke the setup manually without the wrapper script for a full node:
 ```bash
 sudo apt-get install -y ansible
 ansible-playbook -i localhost, -c local scripts/ansible/setup_full_node.yml --extra-vars "network=preprod"
@@ -40,14 +44,15 @@ sudo apt-get install -y ansible
 ansible-playbook -i localhost, -c local scripts/ansible/setup_node.yml --extra-vars "network=preprod"
 ```
 
-2. **Start Cardano DB Sync:**
-   Run `cardano-db-sync` connected to the `cardano-node` socket to populate the PostgreSQL database.
+### Step 2: Validate Cardano DB Sync
+
+Before continuing to start the Midnight Node, ensure that `cardano-db-sync` has completed syncing to populate the PostgreSQL database.
    
-   *WAIT HERE:* Monitor the DB sync process. **It takes ~6 hours on pre-prod.** Ensure it is fully synced before proceeding.
+*WAIT HERE:* Monitor the DB sync process. **It takes ~6 hours on pre-prod.** Ensure it is fully synced before proceeding.
 
 ---
 
-### Step 3: Midnight Node Installation
+### Step 3: Midnight Node Configuration (If Not Using Ansible)
 
 1. **Download Midnight Node Binary:**
    ```bash

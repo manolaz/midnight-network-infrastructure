@@ -36,6 +36,7 @@ make deploy network=preview
 3. Open a Pull Request using the provided PR template.
 4. Describe your changes in detail, explaining *why* the change was made and *how* you tested it.
 5. A maintainer will review your code. Please address any requested changes promptly.
+6. Please note that all contributors must adhere to our [Code of Conduct](../../CODE_OF_CONDUCT.md).
 
 ## Reporting Issues
 

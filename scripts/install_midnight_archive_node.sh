@@ -4,7 +4,7 @@
 # Description: Automates the setup of an Archive Node for the Midnight networks
 #              (Preview/Preprod/Mainnet). Enables keeping historical states to 
 #              track transactions and enables RPC options for indexers/explorers.
-#              This complements the instructions in RUNBOOK.md.
+#              This complements the instructions in docs/operations/RUNBOOK.md.
 # Usage: sudo ./install_midnight_archive_node.sh [NETWORK]
 # ==============================================================================
 
