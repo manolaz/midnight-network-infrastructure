@@ -1,5 +1,5 @@
 [Unit]
-Description=Midnight Archive Node
+Description=Midnight {{ midnight_node_type | default('Archive') | capitalize }} Node
 Wants=network-online.target
 After=network-online.target cardano-node.service
 
@@ -12,8 +12,12 @@ ExecStart={{ node_home }}/.local/bin/midnight-node \
     --chain {{ node_home }}/res/{{ network }}/chain-spec-raw.json \
     --base-path {{ node_home }}/data \
     --name {{ midnight_node_name }} \
+{% if midnight_node_type | default('archive') == 'archive' %}
     --pruning archive \
-{% if is_rpc_node | default(true) %}
+{% else %}
+    --pool-limit 35 \
+{% endif %}
+{% if is_rpc_node | default(false) %}
     --rpc-external \
     --rpc-cors all \
     --rpc-port 9944 \

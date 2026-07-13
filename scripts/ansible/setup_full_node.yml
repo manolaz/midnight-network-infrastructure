@@ -1,0 +1,43 @@
+---
+- name: Setup Midnight Full Node
+  hosts: all
+  become: yes
+  vars:
+    network: "preprod" # Options: preview, preprod, mainnet
+    networks:
+      preview:
+        cardano_network: "preview"
+        mithril_aggregator: "https://aggregator.pre-release-preview.api.mithril.network/aggregator"
+        mithril_config: "pre-release-preview"
+        midnight_bootnode: "bootnode-1.preview.midnight.network"
+      preprod:
+        cardano_network: "preprod"
+        mithril_aggregator: "https://aggregator.pre-release-preprod.api.mithril.network/aggregator"
+        mithril_config: "pre-release-preprod"
+        midnight_bootnode: "bootnode-1.preprod.midnight.network"
+      mainnet:
+        cardano_network: "mainnet"
+        mithril_aggregator: "https://aggregator.release-mainnet.api.mithril.network/aggregator"
+        mithril_config: "release-mainnet"
+        midnight_bootnode: "bootnode-1.mainnet.midnight.network"
+
+    cardano_network: "{{ networks[network].cardano_network }}"
+    mithril_aggregator: "{{ networks[network].mithril_aggregator }}"
+    mithril_config: "{{ networks[network].mithril_config }}"
+    midnight_bootnode: "{{ networks[network].midnight_bootnode }}"
+
+    node_user: midnight
+    node_home: /home/midnight
+    db_user: midnight
+    db_password: YOUR_POSTGRES_PASSWORD
+    db_name: cexplorer
+    midnight_node_name: midnight-full-node
+    midnight_node_type: full
+    is_rpc_node: false
+    is_boot_node: false
+  roles:
+    - common
+    - postgres
+    - cardano_node
+    - cardano_db_sync
+    - midnight_node
