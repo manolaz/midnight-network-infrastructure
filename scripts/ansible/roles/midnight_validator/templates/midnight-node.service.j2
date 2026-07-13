@@ -1,0 +1,27 @@
+[Unit]
+Description=Midnight Protocol Node ({{ network }} FNO Validator)
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+User={{ node_user }}
+Group={{ node_user }}
+Type=simple
+WorkingDirectory={{ node_home }}
+EnvironmentFile={{ node_home }}/.env
+
+ExecStart={{ node_home }}/.local/bin/midnight-node \
+    --chain {{ node_home }}/res/{{ network }}/chain-spec-raw.json \
+    --base-path {{ node_home }}/data \
+    --telemetry-url 'wss://telemetry.shielded.tools/submit 1' \
+    --validator \
+    --pool-limit 35 \
+    --name {{ midnight_node_name }} \
+    --rpc-port 9933
+
+Restart=on-failure
+RestartSec=10
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

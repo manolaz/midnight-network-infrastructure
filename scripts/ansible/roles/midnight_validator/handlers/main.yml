@@ -1,0 +1,9 @@
+---
+# Handlers for Midnight Validator Node
+- name: restart midnight-node
+  become: yes
+  systemd:
+    name: midnight-node
+    state: restarted
+    daemon_reload: yes
+    enabled: yes

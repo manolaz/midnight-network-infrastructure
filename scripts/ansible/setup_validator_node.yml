@@ -1,0 +1,13 @@
+---
+- name: Setup Midnight Validator Node
+  hosts: localhost
+  connection: local
+  become: yes
+  vars:
+    network: preprod
+    node_user: "{{ lookup('env', 'USER') | default('midnight', true) }}"
+    node_home: "/home/{{ node_user }}"
+    midnight_node_name: "midnight-validator-preprod"
+    postgres_password: "YOUR_POSTGRES_PASSWORD"
+  roles:
+    - midnight_validator
