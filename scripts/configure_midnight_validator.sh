@@ -86,6 +86,7 @@ ExecStart=$USER_HOME/.local/bin/midnight-node \\
     --validator \\
     --pool-limit 35 \\
     --name \${NODE_NAME} \\
+    --node-key-file \${NODE_KEY_FILE} \\
     --rpc-port 9933
 
 Restart=on-failure
