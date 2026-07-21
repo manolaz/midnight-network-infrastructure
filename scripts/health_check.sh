@@ -22,16 +22,27 @@ echo "[*] Polling Midnight Node at $RPC_URL..."
 # Fetch system_health
 HEALTH_RESPONSE=$(curl -s -X POST -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "system_health"}' "$RPC_URL")
 
+# Fetch current block height (via chain_getHeader)
+HEADER_RESPONSE=$(curl -s -X POST -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "chain_getHeader"}' "$RPC_URL")
+
 # Check if curl succeeded
 if [ $? -ne 0 ] || [ -z "$HEALTH_RESPONSE" ]; then
     echo "[-] Error: Failed to connect to RPC endpoint."
     STATUS="offline"
     PEERS=0
     IS_SYNCING="unknown"
+    DEC_HEIGHT=0
 else
     # Parse values using jq
     PEERS=$(echo "$HEALTH_RESPONSE" | jq -r '.result.peers // 0')
     IS_SYNCING=$(echo "$HEALTH_RESPONSE" | jq -r '.result.isSyncing // false')
+    
+    HEX_HEIGHT=$(echo "$HEADER_RESPONSE" | jq -r '.result.number // empty')
+    if [[ "$HEX_HEIGHT" =~ ^0x[0-9a-fA-F]+$ ]]; then
+        DEC_HEIGHT=$((HEX_HEIGHT))
+    else
+        DEC_HEIGHT=0
+    fi
     
     # Simple evaluation
     if [ "$PEERS" -gt 0 ] && [ "$IS_SYNCING" == "false" ]; then
@@ -52,6 +63,7 @@ cat <<JSON > "$REPORT_FILE"
   "status": "$STATUS",
   "peers": $PEERS,
   "is_syncing": $IS_SYNCING,
+  "block_height": $DEC_HEIGHT,
   "rpc_url": "$RPC_URL"
 }
 JSON
@@ -65,6 +77,7 @@ if [ -f "$PREV_REPORT_FILE" ]; then
     echo "[*] Comparing with previous report..."
     PREV_STATUS=$(jq -r '.status' "$PREV_REPORT_FILE")
     PREV_PEERS=$(jq -r '.peers' "$PREV_REPORT_FILE")
+    PREV_HEIGHT=$(jq -r '.block_height // 0' "$PREV_REPORT_FILE")
     
     if [ "$PREV_STATUS" == "healthy" ] && [ "$STATUS" != "healthy" ]; then
         echo "  [!] REGRESSION DETECTED: Status degraded from healthy to $STATUS"
@@ -72,6 +85,11 @@ if [ -f "$PREV_REPORT_FILE" ]; then
     
     if [ "$PREV_PEERS" -gt 5 ] && [ "$PEERS" -lt 5 ]; then
         echo "  [!] REGRESSION DETECTED: Peer count dropped significantly (was $PREV_PEERS, now $PEERS)"
+    fi
+    
+    # Stall Check: block height hasn't increased while the node was active
+    if [ "$STATUS" == "healthy" ] && [ "$PREV_STATUS" == "healthy" ] && [ "$DEC_HEIGHT" -eq "$PREV_HEIGHT" ] && [ "$DEC_HEIGHT" -gt 0 ]; then
+        echo "  [!] REGRESSION DETECTED: Block height stalled at $DEC_HEIGHT (no progress since last check)"
     fi
 else
     echo "[*] No previous report found to compare against."
