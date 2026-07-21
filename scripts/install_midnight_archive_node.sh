@@ -54,6 +54,8 @@ echo "    - sudo systemctl status cardano-node"
 echo "    - sudo systemctl status cardano-db-sync"
 echo "    - sudo systemctl status midnight-node"
 
+cat << 'ENV' > "$USER_HOME/.env"
+export POSTGRES_HOST="localhost"
 export POSTGRES_DB="cexplorer"
 export POSTGRES_PORT="5432"
 export POSTGRES_USER="midnight"
